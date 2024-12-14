@@ -4,7 +4,7 @@
 AMBIENTE='dev'
 
 # URL onde está instalado a aplicação
-WWWROOT='http://servidor/pasta_raiz'
+WWWROOT='http://localhost'
 
 # Se o servidor estiver atrás de um proxy ou firewall 
 # cadastre no /etc/hosts o dominio 
@@ -14,9 +14,10 @@ WWWROOT='http://servidor/pasta_raiz'
 DB_TIPO='sqlite'
 
 # Se utilizar outro DB, deve preencher o DSN, username e password
-DB_DSN='mysql:host=localhost;dbname=votacao'
-DB_USERNAME=
-DB_PASSWORD=
+DB_DSN='mysql:host=127.0.0.1;dbname=votacao'
+DB_DATABASE='votacao'
+DB_USERNAME='local_user'
+DB_PASSWORD='local_password'
 
 # Senha unica
 # github.com/uspdev/senhaunica
