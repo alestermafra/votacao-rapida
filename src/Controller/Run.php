@@ -167,9 +167,9 @@ class Run
 
         $acao = $data['acao'] ?? null;
 
-        if (in_array($acao, ['iniciar_todas', 'pausar', 'retomar'])) {
+        if (in_array($acao, ['iniciar', 'pausar', 'retomar'])) {
             switch ($acao) {
-                case 'iniciar_todas':
+                case 'iniciar':
                     $votacoes = $sessao->withCondition(' estado = 1 ')->ownVotacaoList;
                     foreach ($votacoes as $votacao) {
                         $votacao->estado = 2;
