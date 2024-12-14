@@ -163,7 +163,14 @@ class Run
 
         // acoes para a rota de apoio
         if (isset($_GET['acao'])) {
-            $data = ['acao' => $_GET['acao'], 'votacao_id' => $_GET['votacao_id']];
+            $data = [
+                'acao' => $_GET['acao']
+            ];
+
+            if (isset($_GET['votacao_id'])) {
+                $data['votacao_id'] = $_GET['votacao_id'];
+            }
+
             $res = Api::post($hash, $token, $data);
             // temos de devolver res de alguma forma se houver erro
             //print_r($res);exit;
@@ -175,7 +182,18 @@ class Run
         $tpl = new Template('apoio_index.html');
 
         $tpl->S = $sessao;
+
         foreach ($sessao->votacoes as $v) {
+            if ($v->estado === 'Fechada') {
+                $tpl->v = $v;
+                $tpl->block('block_votacao_fechada');
+            }
+
+            if ($v->estado === 'Em exibição') {
+                $tpl->v = $v;
+                $tpl->block('block_votacao_em_exibicao');
+            }
+
             $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
             $v->estadoclass = SELF::getEstadoClass($v->estado);
             $v->accordion = new \stdClass();
@@ -402,7 +420,7 @@ class Run
         }
         $tpl->show();
     }
-    
+
     protected static function getEstadoClass($estado)
     {
         switch ($estado) {

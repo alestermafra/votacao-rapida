@@ -165,95 +165,110 @@ class Run
     {
         $data = \Flight::request()->data;
 
-        // se ação não estiver dentro das ações predefinidas, vamos abortar
-        if (!$acao = R::findOne('acao', "cod = ?", [$data['acao']])) {
-            return ['msg' => 'Ação inválida: ' . $data['acao']];
-        }
+        $acao = $data['acao'] ?? null;
 
-        // vmos carregar a votação
-        $votacao = Votacao::obter($data->votacao_id);
+        if (in_array($acao, ['iniciar_todas'])) {
+            switch ($acao) {
+                case 'iniciar_todas':
+                    $votacoes = $sessao->withCondition(' estado = 1 ')->ownVotacaoList;
+                    foreach ($votacoes as $votacao) {
+                        $votacao->estado = 2;
+                        R::store($votacao);
+                    }
 
-        switch (intval($data['acao'])) {
-            case '0': // mostrar na tela
-                $votacao->estado = $acao->estado;
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                    return ['msg' => 'Votações iniciadas'];
+            }
+        } else {
+            // se ação não estiver dentro das ações predefinidas, vamos abortar
+            if (!$acao = R::findOne('acao', "cod = ?", [$data['acao']])) {
+                return ['msg' => 'Ação inválida: ' . $data['acao']];
+            }
 
-            case '1': // fechar
-                $votacao->estado = $acao->estado;
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+            // vmos carregar a votação
+            $votacao = Votacao::obter($data->votacao_id);
 
-            case '2': // iniciar votação
-                // limpar votos existentes, se houver
-                Votacao::limparVotosExistentes($votacao);
+            switch (intval($data['acao'])) {
+                case '0': // mostrar na tela
+                    $votacao->estado = $acao->estado;
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-                $votacao->estado = $acao->estado;
-                $votacao->data_ini = date('Y-m-d H:i:s');
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case '1': // fechar
+                    $votacao->estado = $acao->estado;
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-            case '3': // pausar
-                $votacao->estado = $acao->estado;
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case '2': // iniciar votação
+                    // limpar votos existentes, se houver
+                    Votacao::limparVotosExistentes($votacao);
 
-            case '4': //Mostrar resultado
-                $votacao->estado = $acao->estado;
-                if (empty($votacao->data_fim)) {
-                    $votacao->data_fim = date('Y-m-d H:i:s');
-                    // vamos exportar para um arquivo externo somente da primeira vez
-                    Votacao::exportar($votacao);
-                }
+                    $votacao->estado = $acao->estado;
+                    $votacao->data_ini = date('Y-m-d H:i:s');
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case '3': // pausar
+                    $votacao->estado = $acao->estado;
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-            case '5': // continuar
-                $votacao->estado = $acao->estado;
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case '4': //Mostrar resultado
+                    $votacao->estado = $acao->estado;
+                    if (empty($votacao->data_fim)) {
+                        $votacao->data_fim = date('Y-m-d H:i:s');
+                        // vamos exportar para um arquivo externo somente da primeira vez
+                        Votacao::exportar($votacao);
+                    }
 
-            case '6': //Reiniciar
-                if ($votacao->estado == 5) {
-                    return ['msg' => 'Impossível reiniciar depois de encerrada'];
-                }
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-                // limpar votos existentes, se houver
-                Votacao::limparVotosExistentes($votacao);
+                case '5': // continuar
+                    $votacao->estado = $acao->estado;
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-                $votacao->estado = $acao->estado;
-                $votacao->data_ini = date('Y-m-d H:i:s');
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case '6': //Reiniciar
+                    if ($votacao->estado == 5) {
+                        return ['msg' => 'Impossível reiniciar depois de encerrada'];
+                    }
 
-            case '7': // finalizar
-                $votacao->estado = $acao->estado;
-                R::store($votacao);
+                    // limpar votos existentes, se houver
+                    Votacao::limparVotosExistentes($votacao);
 
-                return ['msg' => $acao->msg];
-                break;
+                    $votacao->estado = $acao->estado;
+                    $votacao->data_ini = date('Y-m-d H:i:s');
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-            case '9': // criar instantaneo
-                // aqui não precisa de $votacao, pois vai criar uma nova
-                $votacao = Votacao::novoInstantaneo($sessao, trim($data['texto']));
-                //$votacao->sessao_id = $sessao->id;
-                //R::store($votacao);
+                case '7': // finalizar
+                    $votacao->estado = $acao->estado;
+                    R::store($votacao);
 
-                return ['status' => 'ok', 'msg' => 'Votação adicionada com sucesso'];
-                break;
+                    return ['msg' => $acao->msg];
+                    break;
 
-            case '10':
-                R::trash($votacao);
-                return ['status' => 'ok', 'msg' => 'Votação excluída com sucesso'];
-                break;
+                case '9': // criar instantaneo
+                    // aqui não precisa de $votacao, pois vai criar uma nova
+                    $votacao = Votacao::novoInstantaneo($sessao, trim($data['texto']));
+                    //$votacao->sessao_id = $sessao->id;
+                    //R::store($votacao);
+
+                    return ['status' => 'ok', 'msg' => 'Votação adicionada com sucesso'];
+                    break;
+
+                case '10':
+                    R::trash($votacao);
+                    return ['status' => 'ok', 'msg' => 'Votação excluída com sucesso'];
+                    break;
+            }
         }
     }
 
