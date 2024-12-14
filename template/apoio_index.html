@@ -70,7 +70,72 @@
                 <a href="apoio?acao=iniciar_todas" class="btn btn-primary">Iniciar todas</a>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-5">
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                Em votação
+            </div>
+            
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Votação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- BEGIN block_em_votacao -->
+                        <tr>
+                            <td>
+                                <div>{v->nome}</div>
+                            </td>
+                        </tr>
+                        <!-- END block_em_votacao -->
+                    </tbody>
+                </table>
+            </div>
     
+            <div class="card-footer">
+                <a href="apoio?acao=pausar" class="btn btn-warning">Pausar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-5">
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                Em pausa
+            </div>
+            
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Votação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- BEGIN block_em_pausa -->
+                        <tr>
+                            <td>
+                                <div>{v->nome}</div>
+                            </td>
+                        </tr>
+                        <!-- END block_em_pausa -->
+                    </tbody>
+                </table>
+            </div>
+    
+            <div class="card-footer">
+                <a href="apoio?acao=retomar" class="btn btn-primary">Retomar</a>
+            </div>
+        </div>
     </div>
 </div>
 

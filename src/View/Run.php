@@ -194,6 +194,16 @@ class Run
                 $tpl->block('block_votacao_em_exibicao');
             }
 
+            if ($v->estado === 'Em votação') {
+                $tpl->v = $v;
+                $tpl->block('block_em_votacao');
+            }
+
+            if ($v->estado === 'Em pausa') {
+                $tpl->v = $v;
+                $tpl->block('block_em_pausa');
+            }
+
             $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
             $v->estadoclass = SELF::getEstadoClass($v->estado);
             $v->accordion = new \stdClass();
