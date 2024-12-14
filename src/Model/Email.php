@@ -102,9 +102,7 @@ class Email
         return true;
     }
 
-    public static function sendNovoGerente($sessao, $gerente)
-    {
-    }
+    public static function sendNovoGerente($sessao, $gerente) {}
 
     public static function sendExportarVotacao($export)
     {
@@ -235,6 +233,12 @@ class Email
 
     public static function send($arr)
     {
+        $mailHost = getenv('EMAIL_HOST');
+        $mailPort = getenv('EMAIL_PORT');
+        $mailFrom = getenv('EMAIL_FROM');
+        $mailUsername = getenv('EMAIL_USERNAME');
+        $mailPassword = getenv('EMAIL_PWD');
+
         $mail = new PHPMailer();
         //$mail->CharSet = 'UTF-8';
         //$mail->Encoding = 'base64';
@@ -244,14 +248,13 @@ class Email
         $mail->SMTPDebug = SMTP::DEBUG_SERVER;
 
         //$mail->SMTPKeepAlive = true;
-        $mail->Host = getenv('EMAIL_HOST');
-        $mail->Port = getenv('EMAIL_PORT');
-        $mail->SMTPAuth = true;
+        $mail->Host = $mailHost;
+        $mail->Port = $mailPort;
+        $mail->SMTPAuth = $mailUsername != null;
 
         switch (getenv('EMAIL_AUTH_TYPE')) {
             case 'oauth':
                 $mail->AuthType = 'XOAUTH2';
-                $email = getenv('EMAIL');
                 $clientId = getenv('EMAIL_OAUTH_CLIENT_ID');
                 $clientSecret = getenv('EMAIL_OAUTH_CLIENT_SECRET');
                 $refreshToken = getenv('EMAIL_OAUTH_REFRESH_TOKEN');
@@ -262,29 +265,29 @@ class Email
                     'clientId' => $clientId,
                     'clientSecret' => $clientSecret,
                     'refreshToken' => $refreshToken,
-                    'userName' => $email,
+                    'userName' => $mailUsername,
                 ]));
                 break;
             case 'login':
                 $mail->AuthType = 'LOGIN';
                 $mail->SMTPAutoTLS = false;
-                $mail->Username = getenv('EMAIL');
-                $mail->Password = getenv('EMAIL_PWD');
+                $mail->Username = $mailUsername;
+                $mail->Password = $mailPassword;
                 break;
             case 'tls':
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Username = getenv('EMAIL');
-                $mail->Password = getenv('EMAIL_PWD');
+                $mail->Username = $mailUsername;
+                $mail->Password = $mailPassword;
                 break;
             case 'ssl':
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-                $mail->Username = getenv('EMAIL');
-                $mail->Password = getenv('EMAIL_PWD');
+                $mail->Username = $mailUsername;
+                $mail->Password = $mailPassword;
                 break;
         }
 
         $mail->setLanguage('pt_br');
-        $mail->setFrom(getenv('EMAIL'), utf8_decode("Votação rápida"));
+        $mail->setFrom($mailFrom, utf8_decode("Votação rápida"));
         $mail->AddAddress($arr['destinatario']);
 
         (isset($arr['bcc'])) ? $mail->addBCC($arr['bcc']) : '';
@@ -305,7 +308,7 @@ class Email
         //$mail->AltBody = $arr['alt']; //PlainText, para caso quem receber o email não aceite o corpo HTML
 
         $mail->Debugoutput = function ($str, $level) use ($arr) {
-            $arq = LOCAL . '/log/emaillog-'.date('Y-m-d').'.txt';
+            $arq = LOCAL . '/log/emaillog-' . date('Y-m-d') . '.txt';
             file_put_contents($arq, $str, FILE_APPEND);
         };
 
