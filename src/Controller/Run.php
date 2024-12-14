@@ -167,7 +167,7 @@ class Run
 
         $acao = $data['acao'] ?? null;
 
-        if (in_array($acao, ['iniciar', 'pausar', 'retomar'])) {
+        if (in_array($acao, ['iniciar', 'pausar', 'retomar', 'mostrar_resultado'])) {
             switch ($acao) {
                 case 'iniciar':
                     $votacoes = $sessao->withCondition(' estado = 1 ')->ownVotacaoList;
@@ -195,6 +195,15 @@ class Run
                     }
 
                     return ['msg' => 'Votações retomadas'];
+
+                case 'mostrar_resultado':
+                    $votacoes = $sessao->withCondition(' estado = 3 ')->ownVotacaoList;
+                    foreach ($votacoes as $votacao) {
+                        $votacao->estado = 4;
+                        R::store($votacao);
+                    }
+
+                    return ['msg' => 'Mostrando resultado'];
             }
         } else {
             // se ação não estiver dentro das ações predefinidas, vamos abortar

@@ -134,6 +134,40 @@
     
             <div class="card-footer">
                 <a href="apoio?acao=retomar" class="btn btn-primary">Retomar</a>
+                <a href="apoio?acao=mostrar_resultado" class="btn btn-primary">Mostrar resultado</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-5">
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                Resultado
+            </div>
+            
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Votação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- BEGIN block_resultado -->
+                        <tr>
+                            <td>
+                                <div>{v->nome}</div>
+                            </td>
+                        </tr>
+                        <!-- END block_resultado -->
+                    </tbody>
+                </table>
+            </div>
+    
+            <div class="card-footer">
+                <a href="apoio?acao=finalizar" class="btn btn-primary">Finalizar</a>
             </div>
         </div>
     </div>
