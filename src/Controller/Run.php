@@ -170,47 +170,23 @@ class Run
         if (in_array($acao, ['iniciar', 'pausar', 'retomar', 'mostrar_resultado', 'finalizar'])) {
             switch ($acao) {
                 case 'iniciar':
-                    $votacoes = $sessao->withCondition(' estado = 1 ')->ownVotacaoList;
-                    foreach ($votacoes as $votacao) {
-                        $votacao->estado = 2;
-                        R::store($votacao);
-                    }
-
+                    R::exec('update votacao set estado = 2 where sessao_id = :sessao_id and estado = 1', [':sessao_id' => $sessao->id]);
                     return ['msg' => 'Votações iniciadas'];
 
                 case 'pausar':
-                    $votacoes = $sessao->withCondition(' estado = 2 ')->ownVotacaoList;
-                    foreach ($votacoes as $votacao) {
-                        $votacao->estado = 3;
-                        R::store($votacao);
-                    }
-
+                    R::exec('update votacao set estado = 3 where sessao_id = :sessao_id and estado = 2', [':sessao_id' => $sessao->id]);
                     return ['msg' => 'Votações pausadas'];
 
                 case 'retomar':
-                    $votacoes = $sessao->withCondition(' estado = 3 ')->ownVotacaoList;
-                    foreach ($votacoes as $votacao) {
-                        $votacao->estado = 2;
-                        R::store($votacao);
-                    }
-
+                    R::exec('update votacao set estado = 2 where sessao_id = :sessao_id and estado = 3', [':sessao_id' => $sessao->id]);
                     return ['msg' => 'Votações retomadas'];
 
                 case 'mostrar_resultado':
-                    $votacoes = $sessao->withCondition(' estado = 3 ')->ownVotacaoList;
-                    foreach ($votacoes as $votacao) {
-                        $votacao->estado = 4;
-                        R::store($votacao);
-                    }
-
+                    R::exec('update votacao set estado = 4 where sessao_id = :sessao_id and estado = 3', [':sessao_id' => $sessao->id]);
                     return ['msg' => 'Mostrando resultado'];
 
                 case 'finalizar':
-                    R::exec(
-                        'update votacao set estado = 5 where sessao_id = :sessao_id and estado = 4',
-                        [':sessao_id' => $sessao->id]
-                    );
-
+                    R::exec('update votacao set estado = 5 where sessao_id = :sessao_id and estado = 4', [':sessao_id' => $sessao->id]);
                     return ['msg' => 'Votações finalizadas'];
             }
         } else {
