@@ -15,7 +15,7 @@
                         <!-- BEGIN block_votacao_fechada -->
                         <tr>
                             <td>
-                                <div>{v->nome}</div>
+                                <div>{v->nome} <span class="badge badge-info">{V->tipo}</span></div>
                             </td>
                             <td style="width: 1px;" nowrap>
                                 <a href="apoio?acao=0&votacao_id={v->id}" class="btn btn-sm btn-primary">Exibir</a>
@@ -43,7 +43,7 @@
                         <!-- BEGIN block_votacao_em_exibicao -->
                         <tr>
                             <td>
-                                <div>{v->nome}</div>
+                                <div>{v->nome} <span class="badge badge-info">{V->tipo}</span></div>
                             </td>
                             <td style="width: 1px;" nowrap>
                                 <a href="apoio?acao=1&votacao_id={v->id}" class="btn btn-sm btn-primary">Esconder</a>
@@ -74,7 +74,7 @@
                         <!-- BEGIN block_em_votacao -->
                         <tr>
                             <td>
-                                <div>{v->nome}</div>
+                                <div>{v->nome} <span class="badge badge-info">{V->tipo}</span></div>
                             </td>
                         </tr>
                         <!-- END block_em_votacao -->
@@ -102,7 +102,7 @@
                         <!-- BEGIN block_em_pausa -->
                         <tr>
                             <td>
-                                <div>{v->nome}</div>
+                                <div>{v->nome} <span class="badge badge-info">{V->tipo}</span></div>
                             </td>
                         </tr>
                         <!-- END block_em_pausa -->
@@ -131,7 +131,7 @@
                         <!-- BEGIN block_resultado -->
                         <tr>
                             <td>
-                                <div>{v->nome}</div>
+                                <div>{v->nome} <span class="badge badge-info">{V->tipo}</span></div>
                             </td>
                         </tr>
                         <!-- END block_resultado -->
@@ -159,7 +159,7 @@
                         <!-- BEGIN block_finalizado -->
                         <tr>
                             <td>
-                                <div>{v->nome}</div>
+                                <div>{v->nome} <span class="badge badge-info">{V->tipo}</span></div>
                             </td>
                             <td style="width: 1px;" nowrap>
                                 <a href="apoio?acao=4&votacao_id={v->id}" class="btn btn-sm btn-primary">Mostrar resultado</a>

@@ -184,6 +184,8 @@ class Run
         $tpl->S = $sessao;
 
         foreach ($sessao->votacoes as $v) {
+            $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
+
             if ($v->estado === 'Fechada') {
                 $tpl->v = $v;
                 $tpl->block('block_votacao_fechada');
@@ -214,7 +216,6 @@ class Run
                 $tpl->block('block_finalizado');
             }
 
-            $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
             $v->estadoclass = SELF::getEstadoClass($v->estado);
             $v->accordion = new \stdClass();
             if ($v->estado == 'Fechada' or $v->estado == 'Finalizado') {
