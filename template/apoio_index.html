@@ -182,16 +182,14 @@
             
             <div class="card-body">
                 <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th scope="col">Votação</th>
-                        </tr>
-                    </thead>
                     <tbody>
                         <!-- BEGIN block_finalizado -->
                         <tr>
                             <td>
                                 <div>{v->nome}</div>
+                            </td>
+                            <td style="width: 1px;" nowrap>
+                                <a href="apoio?acao=4&votacao_id={v->id}" class="btn btn-sm btn-primary">Mostrar resultado</a>
                             </td>
                         </tr>
                         <!-- END block_finalizado -->
