@@ -173,6 +173,35 @@
     </div>
 </div>
 
+<div class="row">
+    <div class="col-md-6 mb-5">
+        <div class="card">
+            <div class="card-header font-weight-bold">
+                Finalizados
+            </div>
+            
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Votação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- BEGIN block_finalizado -->
+                        <tr>
+                            <td>
+                                <div>{v->nome}</div>
+                            </td>
+                        </tr>
+                        <!-- END block_finalizado -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="accordion">
     <!-- BEGIN block_votacao -->
     <div class="card {V->accordion->border}">

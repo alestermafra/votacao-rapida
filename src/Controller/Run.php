@@ -167,7 +167,7 @@ class Run
 
         $acao = $data['acao'] ?? null;
 
-        if (in_array($acao, ['iniciar', 'pausar', 'retomar', 'mostrar_resultado'])) {
+        if (in_array($acao, ['iniciar', 'pausar', 'retomar', 'mostrar_resultado', 'finalizar'])) {
             switch ($acao) {
                 case 'iniciar':
                     $votacoes = $sessao->withCondition(' estado = 1 ')->ownVotacaoList;
@@ -204,6 +204,14 @@ class Run
                     }
 
                     return ['msg' => 'Mostrando resultado'];
+
+                case 'finalizar':
+                    R::exec(
+                        'update votacao set estado = 5 where sessao_id = :sessao_id and estado = 4',
+                        [':sessao_id' => $sessao->id]
+                    );
+
+                    return ['msg' => 'Votações finalizadas'];
             }
         } else {
             // se ação não estiver dentro das ações predefinidas, vamos abortar
