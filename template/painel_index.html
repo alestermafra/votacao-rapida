@@ -1,5 +1,5 @@
 <style>
-    div.zebra>div:nth-of-type(odd) {
+    div.zebra>div:nth-of-type(odd), .zebra>span:nth-of-type(odd) {
         background: #f0f0f0;
     }
 
@@ -12,9 +12,56 @@
 
 <h1>{S->nome}</h1>
 <hr>
+
 <!-- BEGIN block_msg -->
-<h2>{msg}</h2>
+    <h2>{msg}</h2>
 <!-- END block_msg -->
+
+<!-- BEGIN block_votacao -->
+    <div class="row border-bottom mb-3">
+        <div class="col-md-3 p-3">
+            <h1 class="text-dark">
+                {votacao->nome}
+                <!-- BEGIN block_estado -->
+                    <span class="badge {votacao->estado_class}">{votacao->estado}</span>
+                <!-- END block_estado -->
+            </h1>
+            <div>
+                {votacao->descricao|nl2br}
+            </div>
+        </div>
+
+        <div class="col-md-7 p-3 border-right">
+            <div class="pb-2 strong">VOTOS</div>
+            <div class="">
+                <!-- BEGIN block_voto -->
+                    <div class="d-inline-block px-2">{voto->apelido}: {voto->alternativa}</div>
+                <!-- END block_voto -->
+            </div>
+        </div>
+
+        <div class="col-md-2 p-3">
+            <div>
+                <div class="pb-2 strong">RESULTADO</div>
+                <div class="zebra mb-3">
+                    <!-- BEGIN block_r -->
+                        <div class="pl-1 ml-2 py-1">{R->texto}: {R->num_resposta} votos</div>
+                    <!-- END block_r -->
+                </div>
+            </div>
+
+            <div>
+                <div class="pb-2 strong">
+                    TOTAL:
+                    <!-- BEGIN block_total_votos -->
+                        {votacao->computados}
+                    <!-- END block_total_votos -->
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- END block_votacao -->
+
 
 <div class="text-secondary h2 mb-4">
     <span class="badge badge-info">{V->tipo}</span>

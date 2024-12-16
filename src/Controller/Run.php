@@ -293,41 +293,23 @@ class Run
     protected static function painel($sessao)
     {
         // vamos ver se tem alguma votação para ser exibida na tela
-        $painel = '';
-        foreach ($sessao->ownVotacaoList as $votacao) {
+        $votacoes = $sessao->withCondition(' estado in (1, 2, 3, 4) ')->ownVotacaoList;
 
-            switch ($votacao->estado) {
-                case '1': // em tela
-                case '2': // em votacao
-                case '3': // em pausa
-                    // pegar as alternativas
-                    $votacao->alternativas = $votacao->ownAlternativaList;
-                    $painel = $votacao;
-                    break;
-                case '4': // resultado
-                    // mostra o resultado
-                    $votacao->respostas = Votacao::listarAlternativa($votacao);
-                    $votacao->votos = Votacao::listarResposta($votacao->id);
-                    $painel = $votacao;
-                    break;
-            }
-            if ($painel) break;
+        foreach ($votacoes as &$votacao) {
+            $votacao->alternativas = $votacao->ownAlternativaList;
+            $votacao->respostas = Votacao::listarAlternativa($votacao);
+            $votacao->votos = Votacao::listarResposta($votacao->id);
+            $votacao->computados = Votacao::contarResposta($votacao);
+            $votacao->estado = R::getCell('SELECT nome FROM estado WHERE cod = :cod', [':cod' => $votacao->estado]);
         }
 
-        if (!$painel) {
+        if (count($votacoes) == 0) {
             $sessao->msg = 'Sem votação aberta';
             SELF::limparSaida($sessao);
             return SELF::limparSaida($sessao);
         }
 
-        // vamos obter o total de votos computados
-        // precisa para 2,3 e 4
-        $painel->computados = Votacao::contarResposta($painel);
-
-        // vamos colocar o nome do estado
-        $painel->estado = R::getCell('SELECT nome FROM estado WHERE cod = ' . $painel->estado);
-
-        $sessao->em_tela = $painel;
+        $sessao->votacoes = $votacoes;
         return SELF::limparSaida($sessao);
     }
 

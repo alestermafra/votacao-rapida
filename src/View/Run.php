@@ -275,70 +275,100 @@ class Run
             exit;
         }
 
-        $v = $sessao->em_tela;
-        $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
+        $votacoes = $sessao->votacoes;
 
-        // vamos formatar a apresentação do estado
-        $v->estado_class = SElF::getEstadoClass($v->estado);
+        foreach ($votacoes as &$votacao) {
+            $tpl->votacao = $votacao;
 
-        $tpl->V = $v;
+            $votacao->tipo = $votacao->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
 
-        if ($v->estado == 'Resultado') {
-
-            if (!empty($v->respostas)) {
-                foreach ($v->respostas as $r) {
-                    $tpl->R = $r;
-                    $tpl->block('resultado_resposta');
-                }
+            if ($votacao->estado === 'Em votação') {
+                $votacao->estado_class = self::getEstadoClass($votacao->estado);
+                $tpl->block('block_estado');
             }
 
-            //vamos mostrar o total de votos computados
-            $tpl->block('block_computados');
-
-            if (!empty($v->votos) && $v->tipo == 'Voto aberto') {
-                $i = 0;
-                if (count($v->votos) > 10) {
-                    $dividir = intdiv(count($v->votos), 3);
-                } else {
-                    $dividir = count($v->votos) - 1;
-                }
-                // ordenando por apelido
-                // usort($v->votos, function ($a, $b) {
-                //     return strcmp(strtoupper($a->apelido), strtoupper($b->apelido));
-                // });
-                foreach ($v->votos as $voto) {
-                    $tpl->voto = $voto;
-                    $tpl->block('resultado_voto');
-                    if ($dividir == $i or $dividir * 2 == $i) {
-                        $tpl->block('block_coluna');
-                    }
-                    $i++;
-                }
-                $tpl->block('block_coluna');
+            // exibe os votos
+            foreach ($votacao->votos as $voto) {
+                $tpl->voto = $voto;
+                $tpl->block('block_voto');
             }
 
-            $tpl->block('block_resultado');
-        } elseif ($v->estado == 'Em exibição' || $v->estado == 'Em votação' || $v->estado == 'Em pausa') {
-
-            if ($v->estado == 'Em votação') {
-                $tpl->block('block_em_votacao');
-            }
-            $tpl->block('block_computados');
-
-            if (!empty($v->descricao)) {
-                $tpl->block('exibicao_descricao');
+            // exibe as respostas
+            foreach ($votacao->respostas as $r) {
+                $tpl->R = $r;
+                $tpl->block('block_r');
             }
 
-            if (!empty($v->alternativas)) {
-                foreach ($v->alternativas as $a) {
-                    $tpl->alternativa = $a->texto;
-                    $tpl->block('exibicao_alternativa');
-                }
-            }
-            $tpl->block('block_exibicao');
+            $tpl->block('block_total_votos');
+            $tpl->block('block_votacao');
         }
 
         $tpl->show();
+
+        // $v = $sessao->em_tela;
+        // $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
+
+        // // vamos formatar a apresentação do estado
+        // $v->estado_class = SElF::getEstadoClass($v->estado);
+
+        // $tpl->V = $v;
+
+        // if ($v->estado == 'Resultado') {
+
+        //     if (!empty($v->respostas)) {
+        //         foreach ($v->respostas as $r) {
+        //             $tpl->R = $r;
+        //             $tpl->block('resultado_resposta');
+        //         }
+        //     }
+
+        //     //vamos mostrar o total de votos computados
+        //     $tpl->block('block_computados');
+
+        //     if (!empty($v->votos) && $v->tipo == 'Voto aberto') {
+        //         $i = 0;
+        //         if (count($v->votos) > 10) {
+        //             $dividir = intdiv(count($v->votos), 3);
+        //         } else {
+        //             $dividir = count($v->votos) - 1;
+        //         }
+        //         // ordenando por apelido
+        //         // usort($v->votos, function ($a, $b) {
+        //         //     return strcmp(strtoupper($a->apelido), strtoupper($b->apelido));
+        //         // });
+        //         foreach ($v->votos as $voto) {
+        //             $tpl->voto = $voto;
+        //             $tpl->block('resultado_voto');
+        //             if ($dividir == $i or $dividir * 2 == $i) {
+        //                 $tpl->block('block_coluna');
+        //             }
+        //             $i++;
+        //         }
+        //         $tpl->block('block_coluna');
+        //     }
+
+        //     $tpl->block('block_resultado');
+        // } elseif ($v->estado == 'Em exibição' || $v->estado == 'Em votação' || $v->estado == 'Em pausa') {
+
+        //     if ($v->estado == 'Em votação') {
+        //         $tpl->block('block_em_votacao');
+        //     }
+        //     $tpl->block('block_computados');
+
+        //     if (!empty($v->descricao)) {
+        //         $tpl->block('exibicao_descricao');
+        //     }
+
+        //     if (!empty($v->alternativas)) {
+        //         foreach ($v->alternativas as $a) {
+        //             $tpl->alternativa = $a->texto;
+        //             $tpl->block('exibicao_alternativa');
+        //         }
+        //     }
+        //     $tpl->block('block_exibicao');
+        // }
+
+        // $tpl->show();
     }
 
     public static function recepcao()
