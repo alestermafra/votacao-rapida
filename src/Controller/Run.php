@@ -108,32 +108,47 @@ class Run
         // primeiro vamos ver se tem alguma votação com estado 'Em votação'
         $ret = Votacao::obterEmVotacao($sessao);
         $msg = $ret['msg'];
-        $votacao = $ret['votacao'];
+        $votacoes = $ret['votacoes'];
         $data = \Flight::request()->data;
 
-        if ($votacao == null) {
+        if ($votacoes == null) {
             $ret = ['status' => 'erro', 'msg' => $msg . ', acao=' . $data->acao];
             return $ret;
         };
 
         switch (intval($data->acao)) {
             case '8':
-                //vamos ver se o voto veio para votação correta
-                if (
-                    $votacao->id == $data->votacao_id &&
-                    !empty($data->alternativa_id) &&
-                    in_array($data->alternativa_id, array_column($votacao->ownAlternativaList, 'id'))
-                ) {
-                    $data->user_agent = \Flight::request()->user_agent;
-                    $resposta = Votacao::computarVoto($sessao, $votacao, $data);
-                    return ['status' => 'ok', 'data' => $resposta];
+                $alternativas = $data->alternativas;
+                $respostas = [];
+
+                foreach ($alternativas as $votacao_id => $alternativaId) {
+                    if (in_array($votacao_id, array_column($votacoes, 'id'))) {
+                        $votacao = null;
+
+                        foreach ($votacoes as $v) {
+                            if ($v->id == $votacao_id) {
+                                $votacao = $v;
+                                break;
+                            }
+                        }
+
+                        if ($votacao && in_array($alternativaId, array_column($votacao->alternativas, 'id'))) {
+                            $userAgent = \Flight::request()->user_agent;
+                            $resposta = Votacao::computarVoto($sessao, $votacao, $alternativaId, $userAgent);
+                            $respostas[] = $resposta;
+                        }
+                    }
                 }
 
-                return ['status' => 'erro', 'msg' => 'Voto mal formado para ação ' . $data['acao']];
-                break;
+                if (count($respostas) == 0) {
+                    return ['status' => 'erro', 'msg' => 'Voto mal formado para ação ' . $data->acao];
+                }
+
+                var_dump($respostas);
+                return ['status' => 'ok', 'data' => $respostas];
         }
 
-        return ['status' => 'erro', 'msg' => 'Ação inválida: ' . $data['acao']];
+        return ['status' => 'erro', 'msg' => 'Ação inválida: ' . $data->acao];
     }
 
     protected static function apoioGet($sessao)

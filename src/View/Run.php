@@ -99,19 +99,20 @@ class Run
             // aqui trata o retorno do post
             $msg = json_decode($msg);
 
-            if ($msg->status == 'ok') {
-                $msg->msg = 'Voto computado com sucesso';
-                $msg->datajson = json_encode($msg->data);
-                $msg->voto = $msg->data;
-                $block = 'block_msg_sucesso';
-            } else {
-                $msg->datajson = '';
-                $block = 'block_msg_erro';
-            }
-            $tpl->M = $msg;
 
-            $tpl->V = $v;
-            $tpl->block($block);
+            if ($msg->status == 'ok') {
+                $respostas = $msg->data;
+
+                foreach ($respostas as $resposta) {
+                    $tpl->resposta = $resposta;
+                    $tpl->block('block_resposta');
+                }
+
+                $tpl->block('block_sucesso');
+            } else {
+                $tpl->error = $msg->msg;
+                $tpl->block('block_erro');
+            }
         } else {
             foreach ($votacoes as $votacao) {
                 $tpl->votacao = $votacao;
@@ -139,10 +140,12 @@ class Run
     public static function votacaoPost($data)
     {
         list($hash, $token) = SS::verificaSessao('votacao');
+
         foreach ($token as $t) {
             $sessao = SELF::obterSessao($hash, $t);
-            if (empty($sessao->msg) && isset($sessao->render_form)) break;
+            if (empty($sessao->msg) && isset($sessao->votacoes)) break;
         }
+
         //$sessao = SELF::obterSessao($hash, $token);
 
         // post de formulario

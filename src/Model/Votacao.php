@@ -266,7 +266,7 @@ class Votacao
         return true;
     }
 
-    public static function computarVoto($sessao, $votacao, $data)
+    public static function computarVoto($sessao, $votacao, $alternativaId, $userAgent)
     {
         //vamos invalidar votos anteriores se houver
         R::exec(
@@ -276,16 +276,17 @@ class Votacao
 
         //vamos guardar o novo voto
         $resposta = R::dispense('resposta');
-        $resposta->votacao_id = $data->votacao_id;
-        $resposta->alternativa_id = $data->alternativa_id;
+        $resposta->votacao_id = $votacao->id;
+        $resposta->alternativa_id = $alternativaId;
         $resposta->token = $sessao->token->token;
         $resposta->apelido = $sessao->token->apelido;
         $resposta->datetime = date("Y-m-d H:i:s");
-        $resposta->dispositivo = substr($data->user_agent, 0, 190);
+        $resposta->dispositivo = substr($userAgent, 0, 190);
         $resposta->signature = sha1(json_encode($resposta) . $sessao->hash);
         $resposta->last = 1;
         R::store($resposta);
         $resposta->alternativa;
+        $resposta->votacao;
 
         return $resposta;
     }
