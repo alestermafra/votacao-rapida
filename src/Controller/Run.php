@@ -96,12 +96,9 @@ class Run
     {
         // primeiro vamos ver se tem alguma votação com estado 'Em votação'
         $ret = Votacao::obterEmVotacao($sessao);
-        $sessao->msg = $ret['msg'];
-        $sessao->render_form = $ret['votacao'];
 
-        if ($sessao->render_form != null) {
-            $sessao->render_form->acao = ['cod' => 8, 'nome' => 'Responder'];
-        };
+        $sessao->msg = $ret['msg'];
+        $sessao->votacoes = $ret['votacoes'];
 
         return SELF::limparSaida($sessao);
     }

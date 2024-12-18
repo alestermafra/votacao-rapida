@@ -28,19 +28,21 @@ class Votacao
 
     public static function obterEmVotacao($sessao)
     {
-        $em_votacao = 2; // cod da tabela estado
+        $votacoes = $sessao->withCondition(' estado = 2 ')->ownVotacaoList;
 
-        foreach ($sessao->ownVotacaoList as $votacao) {
-            if ($votacao->estado == $em_votacao) {
-                if ($sessao->token->tipo != $votacao->tipo) {
-                    return ['msg' => 'Token inválido para esta votação', 'votacao' => null];
-                }
-
-                $votacao->alternativas = $votacao->ownAlternativaList;
-                return ['msg' => '', 'votacao' => $votacao];
-            }
+        if (count($votacoes) == 0) {
+            return ['msg' => 'Aguarde a próxima votação', 'votacao' => null];
         }
-        return ['msg' => 'Aguarde a próxima votação', 'votacao' => null];
+
+        foreach ($votacoes as &$votacao) {
+            if ($sessao->token->tipo != $votacao->tipo) {
+                return ['msg' => 'Token inválido para esta votação', 'votacao' => null];
+            }
+
+            $votacao->alternativas = $votacao->ownAlternativaList;
+        }
+
+        return ['msg' => '', 'votacoes' => $votacoes];
     }
 
     // exportar gera um arquivo no filesystem e envia um relatório por email
@@ -201,7 +203,6 @@ class Votacao
             $votacao->obs = $data->obs;
             R::store($votacao);
             return ['status' => 'ok', 'data' => 'Editado observação pós votação'];
-
         } else {
             // se ja tiver sido votado não faremos nada, não precisamos gerar log
             return ['status' => 'erro', 'data' => 'Impossível editar uma votação que já foi votada'];

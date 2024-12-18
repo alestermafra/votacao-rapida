@@ -72,7 +72,7 @@ class Run
         // vamos tentar votar com os tokens existentes
         foreach ($token as $t) {
             $sessao = SELF::obterSessao($hash, $t);
-            if (empty($sessao->msg) && isset($sessao->render_form)) {
+            if (empty($sessao->msg) && isset($sessao->votacoes)) {
                 $token = $t;
                 break;
             }
@@ -93,7 +93,7 @@ class Run
         }
 
         // se não veio msg, vamos continuar
-        $v = $sessao->render_form;
+        $votacoes = $sessao->votacoes;
 
         if (!empty($msg = SS::getDel('votacao_msg'))) {
             // aqui trata o retorno do post
@@ -113,22 +113,25 @@ class Run
             $tpl->V = $v;
             $tpl->block($block);
         } else {
+            foreach ($votacoes as $votacao) {
+                $tpl->votacao = $votacao;
+                $alternativas = $votacao->alternativas;
+
+                foreach ($alternativas as $alternativa) {
+                    $tpl->alternativa = $alternativa;
+                    $tpl->block('block_alternativa');
+                }
+
+                $tpl->block('block_votacao');
+            }
+
+            $tpl->block('block_votacoes');
             // aqui mostra o form de votacao
-
-            $tpl->V = $v;
-            $form = new Form($v);
-            $tpl->form = $form->render();
-            $tpl->block('block_form');
+            // $tpl->V = $v;
+            // $form = new Form($v);
+            // $tpl->form = $form->render();
+            // $tpl->block('block_form');
         }
-
-        $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
-        if (!empty($token->apelido)) {
-            $v->tipo_class = 'hide';
-        } else {
-            $v->tipo_class = '';
-        }
-        $v->estado = 'Em votação';
-        $v->estado_class = SELF::getEstadoClass($v->estado);
 
         $tpl->show();
     }

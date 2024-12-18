@@ -7,76 +7,106 @@
 
 <h1>{S->nome}</h1>
 <hr />
+
 <!-- BEGIN block_msg -->
-<div>
-    <h2>{msg}</h2>
-    <br>
-    <button class="btn btn-outline-primary" onclick="window.location.reload();">Recarregar</button>
-</div>
+    <div>
+        <h2>{msg}</h2>
+        <br>
+        <button class="btn btn-outline-primary" onclick="window.location.reload();">Recarregar</button>
+    </div>
 <!-- END block_msg -->
 
+<!-- BEGIN block_votacoes -->
+    <form method="POST">
+        <div class="mb-3">
+            <!-- BEGIN block_votacao -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3 class="m-0">{votacao->nome}</h3>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="text-secondary mb-3">{votacao->descricao}</div>
+
+                        <div>
+                            <!-- BEGIN block_alternativa -->
+                                <div>
+                                    <input type="radio" name="alternativa[{votacao->id}]" id="alternativa-{alternativa->id}" value="{alternativa->id}">
+                                    <label class="form-check-label" for="alternativa-{alternativa->id}">{alternativa->texto}</label>
+                                </div>
+                            <!-- END block_alternativa -->
+                        </div>
+                    </div>
+                </div>
+            <!-- END block_votacao -->
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enviar</button>
+    </form>
+<!-- END block_votacoes -->
+
 <!-- BEGIN block_em_votacao -->
-<div>
-    <div class="mb-2">
-        <span class="badge badge-info">{V->tipo}</span>
-        <span class="badge badge-info">{S->token->apelido}</span>
-        <span id="estado" class="badge {V->estado_class}">{V->estado}</span>
-    </div>
+    <div>
+        <div class="mb-2">
+            <span class="badge badge-info">{V->tipo}</span>
+            <span class="badge badge-info">{S->token->apelido}</span>
+            <span id="estado" class="badge {V->estado_class}">{V->estado}</span>
+        </div>
 
     <!-- BEGIN block_msg_sucesso -->
-    <div id="sucesso">
-        <h3>{V->nome}</h3>
-        <div class="alert alert-success">
-            {M->msg}
-        </div>
-        <div class="mb-2">
-            <button class="mostrar_btn btn btn-outline-success">Mostrar voto</button>
-            <button class="btn btn-outline-primary ml-4" onclick="window.location.reload();">Recarregar</button>
-        </div>
-        <div class="data alert alert-success hide my-2">
-            <span class="text-secondary">Alternativa escolhida:</span> {M->voto->alternativa->texto}
-        </div>
-        <p class="text-secondary my-4">
-            Recarregue para votar novamente ou para ir para a próxima votação.<br>
-            Você pode votar quantas vezes quiser, somente o último voto será contabilizado.
-        </p>
-        <script type="text/javascript">
-            $(function () {
-                var sucesso = $('#sucesso');
-                sucesso.find('.mostrar_btn').click(function () {
-                    sucesso.find('.data').slideToggle(400);
+        <div id="sucesso">
+            <h3>{V->nome}</h3>
+            <div class="alert alert-success">
+                {M->msg}
+            </div>
+            <div class="mb-2">
+                <button class="mostrar_btn btn btn-outline-success">Mostrar voto</button>
+                <button class="btn btn-outline-primary ml-4" onclick="window.location.reload();">Recarregar</button>
+            </div>
+            <div class="data alert alert-success hide my-2">
+                <span class="text-secondary">Alternativa escolhida:</span> {M->voto->alternativa->texto}
+            </div>
+            <p class="text-secondary my-4">
+                Recarregue para votar novamente ou para ir para a próxima votação.<br>
+                Você pode votar quantas vezes quiser, somente o último voto será contabilizado.
+            </p>
+            <script type="text/javascript">
+                $(function () {
+                    var sucesso = $('#sucesso');
+                    sucesso.find('.mostrar_btn').click(function () {
+                        sucesso.find('.data').slideToggle(400);
+                    });
                 });
-            });
-        </script>
-    </div>
+            </script>
+        </div>
     <!-- END block_msg_sucesso -->
 
     <!-- BEGIN block_msg_erro -->
-    <div>
-        <div class="alert alert-success">{M->msg}</div>
-        <a class="btn btn-outline-warning" href="votacao/">Tentar novamente</a>
-    </div>
+        <div>
+            <div class="alert alert-success">{M->msg}</div>
+            <a class="btn btn-outline-warning" href="votacao/">Tentar novamente</a>
+        </div>
     <!-- END block_msg_erro -->
 
     <!-- BEGIN block_form -->
-    <div>
-        {form}
-        <script type="text/javascript">
-            $(function () {
-                var max = 3;
+        <div>
+            {form}
+            <script type="text/javascript">
+                $(function () {
+                    var max = 3;
 
-                $('input[type="checkbox"]').click(function () {
-                    var countcheck = $('input[type="checkbox"]:checked').length;
-                    console.log(countcheck);
-                    if (countcheck >= max) {
-                        $("input:checkbox:not(:checked)").attr("disabled", true);
-                    } else {
-                        $("input:checkbox").attr("disabled", false);
-                    }
+                    $('input[type="checkbox"]').click(function () {
+                        var countcheck = $('input[type="checkbox"]:checked').length;
+                        console.log(countcheck);
+                        if (countcheck >= max) {
+                            $("input:checkbox:not(:checked)").attr("disabled", true);
+                        } else {
+                            $("input:checkbox").attr("disabled", false);
+                        }
+                    });
                 });
-            });
-        </script>
-    </div>
+            </script>
+        </div>
     <!-- END block_form -->
-</div>
+    </div>
 <!-- END block_em_votacao -->
