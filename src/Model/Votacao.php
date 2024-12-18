@@ -31,12 +31,12 @@ class Votacao
         $votacoes = $sessao->withCondition(' estado = 2 ')->ownVotacaoList;
 
         if (count($votacoes) == 0) {
-            return ['msg' => 'Aguarde a próxima votação', 'votacao' => null];
+            return ['msg' => 'Aguarde a próxima votação', 'votacoes' => null];
         }
 
         foreach ($votacoes as &$votacao) {
             if ($sessao->token->tipo != $votacao->tipo) {
-                return ['msg' => 'Token inválido para esta votação', 'votacao' => null];
+                return ['msg' => 'Token inválido para esta votação', 'votacoes' => null];
             }
 
             $votacao->alternativas = $votacao->ownAlternativaList;
