@@ -4,11 +4,11 @@
 AMBIENTE='dev'
 
 # URL onde está instalado a aplicação
-WWWROOT='http://localhost'
+WWWROOT='http://localhost:8000'
 WWWROOT_API='http://localhost'
 
 # Número usp do primeiro usuário admin
-ADMIN_CODPES=
+ADMIN_CODPES=99999999
 
 # Se o servidor estiver atrás de um proxy ou firewall 
 # cadastre no /etc/hosts o dominio 
@@ -18,10 +18,10 @@ ADMIN_CODPES=
 DB_TIPO='mysql'
 
 # Se utilizar outro DB, deve preencher o DSN, username e password
-DB_DSN='mysql:host=127.0.0.1;dbname=votacao'
+DB_DSN='mysql:host=votacao-rapida-mysql;dbname=votacao'
 DB_DATABASE='votacao'
-DB_USERNAME='local_user'
-DB_PASSWORD='local_password'
+DB_USERNAME='localuser'
+DB_PASSWORD='localpassword'
 
 # Senha unica
 # github.com/uspdev/senhaunica
@@ -36,10 +36,10 @@ API_USER='admin'
 API_PWD='admin'
 
 # Servidor de Email
-EMAIL_HOST=127.0.0.1
+EMAIL_HOST='votacao-rapida-mailpit'
 EMAIL_PORT=1025
 EMAIL_AUTH_TYPE=null
-EMAIL_FROM='alester.mafra@gmail.com'
+EMAIL_FROM='from@example.com'
 EMAIL_USERNAME=
 EMAIL_PWD=
 

@@ -10,28 +10,112 @@ O objetivo desse sistema é fornecer uma plataforma de votação eletrônica a f
 
 ## Dependências
 
-* Servidor web (testado no apache mas deve funcionar em nginx)
 * PHP 7.2
+* Apache
+* Composer 1.x
 * ext-curl
 
-## Instalação e configuração
-
-* git clone
-* composer install
-* cp env .env
-* Ajuste o .env conforme necessário
-* Utilize AMBIENTE='dev' para criar as tabelas on the fly
-* Rode `php cli\atualizar_estrutura.php`
-* Rode `php cli\salvarAdmin.php` para cadastrar-se como admin
-* Ajuste a permissão da pasta local e todo o conteúdo para que o apache possa escrever nele. Outra opção é usar o módulo mpm-itk do apache para que ele rode no mesmo usuário da aplicação (http://mpm-itk.sesse.net/)
-
-É esperado que seja cadastrada a seguinte url de rertono (callback): /login
-
-Caso o servidor esteja atrás de um proxy ou firewall é necessário cadastrar no `/etc/hosts` o domínio utilizado no sistema.
-Se for o ambiente de desenvolvimento geralmente não é necessário.\
-Ex.: 127.0.0.1 votacaorapida.dominio.usp.br
-
+## Atenção
 Mesmo em dev, não utilize o servidor interno do PHP pois ele é monotarefa e o sistema precisa de pelo menos dois processos ativos para funcionar.
+
+# Instalação utilizando Docker
+
+Este tutorial explica como configurar e rodar o sistema utilizando Docker. O arquivo `env` já está configurado para facilitar a instalação.
+
+---
+
+## **Pré-requisitos**
+Certifique-se de que você possui o Docker e o Docker Compose instalados. Para verificar, execute os seguintes comandos:
+
+```bash
+docker --version
+docker compose version
+```
+Se não estiverem instalados, siga as instruções na [documentação oficial do Docker](https://docs.docker.com/get-docker/) para instalá-los.
+
+---
+
+## **Passos para Instalação**
+
+1. **Clone o repositório**:
+   ```bash
+   git clone https://github.com/alestermafra/votacao-rapida.git
+   ```
+
+2. **Acesse a pasta do repositório**:
+   ```bash
+   cd votacao-rapida
+   ```
+
+3. **Copie o arquivo `env` para `.env`**:
+   ```bash
+   cp env .env
+   ```
+   O arquivo `.env` está configurado para rodar com Docker por padrão.
+
+4. **Crie os contêineres**:
+   ```bash
+   docker compose up -d
+   ```
+   Após isso, verifique se os contêineres estão rodando com o comando:
+   ```bash
+   docker ps
+   ```
+   Você deve ver algo similar a:
+   ```
+    CONTAINER ID   IMAGE                   COMMAND                  CREATED          STATUS                    PORTS
+    c6b31874c1b3   votacao-rapida-app      "docker-php-entrypoi…"   17 minutes ago   Up 17 minutes             0.0.0.0:8000->80/tcp, [::]:8000->80/tcp
+    9fac5f526730   mysql:5.7               "docker-entrypoint.s…"   17 minutes ago   Up 17 minutes             0.0.0.0:3306->3306/tcp, :::3306->3306/tcp, 33060/tcp
+    4bb58be3b879   axllent/mailpit:v1.21   "/mailpit"               17 minutes ago   Up 17 minutes (healthy)   0.0.0.0:1025->1025/tcp, :::1025->1025/tcp, 0.0.0.0:8025->8025/tcp, :::8025->8025/tcp, 1110/tcp
+   ```
+
+5. **Acesse o contêiner**:
+   ```bash
+   docker exec -it votacao-rapida-app bash
+   ```
+
+6. **Instale as dependências**:
+   ```bash
+   composer install
+   ```
+
+7. **Crie a infraestrutura do banco de dados**:
+   Execute os seguintes comandos:
+   ```bash
+   php sql/0_nuke.php sim
+   php sql/1_migration_inicial.php
+   php sql/2_seed_inicial.php
+   php sql/3_migration_2020-06-17.php
+   php sql/4_migration_2020-06-30.php
+   ```
+   > **Nota:** A ordem de execução é importante. Esses scripts criam e populam as tabelas do banco de dados.
+
+8. **Ajuste as permissões**:
+   Certifique-se de que o servidor web tem acesso à pasta `local`:
+   ```bash
+   chown -R www-data:www-data local
+   ```
+
+9. **Saia do contêiner**:
+   ```bash
+   exit
+   ```
+
+10. **Acesse o sistema**:
+    - Acesse a aplicação: [http://localhost:8000](http://localhost:8000).
+    - Para fazer o primeiro login como administrador, use a URL: [http://localhost:8000/login/99999999](http://localhost:8000/login/99999999).
+
+---
+
+## **Debug e Solução de Problemas**
+
+### Verificar logs do contêiner
+Se algo não funcionar como esperado, verifique os logs do contêiner:
+```bash
+docker logs votacao-rapida-app
+```
+
+---
 
 ## Mais informações
 
