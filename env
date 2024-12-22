@@ -5,13 +5,17 @@ AMBIENTE='dev'
 
 # URL onde está instalado a aplicação
 WWWROOT='http://localhost'
+WWWROOT_API='http://localhost'
+
+# Número usp do primeiro usuário admin
+ADMIN_CODPES=
 
 # Se o servidor estiver atrás de um proxy ou firewall 
 # cadastre no /etc/hosts o dominio 
 # ex.: 127.0.0.1 votacaorapida.dominio.br
 
 # sqlite ou outro
-DB_TIPO='sqlite'
+DB_TIPO='mysql'
 
 # Se utilizar outro DB, deve preencher o DSN, username e password
 DB_DSN='mysql:host=127.0.0.1;dbname=votacao'
@@ -31,19 +35,11 @@ SENHA_UNICA_AMB='' # prod ou dev
 API_USER='admin'
 API_PWD='admin'
 
-# Email de envio de mensagens (google)
-EMAIL_AUTH_TYPE='ssl' # plain, tls, ssl, oauth
-EMAIL_HOST='smtp.gmail.com'
-EMAIL_PORT=465
-
-EMAIL=
-EMAIL_PWD=
-
 # Servidor de Email
 EMAIL_HOST=127.0.0.1
 EMAIL_PORT=1025
-EMAIL_AUTH_TYPE=
-EMAIL_FROM='from@email.com'
+EMAIL_AUTH_TYPE=null
+EMAIL_FROM='alester.mafra@gmail.com'
 EMAIL_USERNAME=
 EMAIL_PWD=
 
@@ -51,6 +47,3 @@ EMAIL_PWD=
 EMAIL_OAUTH_CLIENT_ID=
 EMAIL_OAUTH_CLIENT_SECRET=
 EMAIL_OAUTH_REFRESH_TOKEN=
-
-# Número usp do primeiro usuário admin
-ADMIN_CODPES=

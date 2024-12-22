@@ -19,7 +19,7 @@ $dotenv->load();
 # o servidor da API deve ser colocada no /etc/hosts 
 # para que não passe pelo proxy e mantenha o virtualhost do apache
 # ex.: 12.7.0.0.1 servidor-do-wwwroot.usp.br
-define('API', getenv('WWWROOT') . '/api'); // caminho da API
+define('API', getenv('WWWROOT_API') . '/api'); // caminho da API
 
 $amb = getenv('AMBIENTE');
 if ($amb == 'dev') {
