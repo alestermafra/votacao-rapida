@@ -288,7 +288,7 @@ class Run
 
             $votacao->tipo = $votacao->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
 
-            if ($votacao->estado === 'Em votação') {
+            if ($votacao->estado === 'Em votação' || $votacao->estado === 'Em pausa') {
                 $votacao->estado_class = self::getEstadoClass($votacao->estado);
                 $tpl->block('block_estado');
             }

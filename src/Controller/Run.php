@@ -193,12 +193,12 @@ class Run
                     R::exec('update votacao set estado = 2 where sessao_id = :sessao_id and estado = 3', [':sessao_id' => $sessao->id]);
                     return ['msg' => 'Votações retomadas'];
 
-                case 'mostrar_resultado':
-                    R::exec('update votacao set estado = 4 where sessao_id = :sessao_id and estado = 3', [':sessao_id' => $sessao->id]);
-                    return ['msg' => 'Mostrando resultado'];
+                    // case 'mostrar_resultado':
+                    //     R::exec('update votacao set estado = 4 where sessao_id = :sessao_id and estado = 3', [':sessao_id' => $sessao->id]);
+                    //     return ['msg' => 'Mostrando resultado'];
 
                 case 'finalizar':
-                    R::exec('update votacao set estado = 5 where sessao_id = :sessao_id and estado = 4', [':sessao_id' => $sessao->id]);
+                    R::exec('update votacao set estado = 5 where sessao_id = :sessao_id and estado = 3', [':sessao_id' => $sessao->id]);
                     return ['msg' => 'Votações finalizadas'];
             }
         } else {
@@ -239,17 +239,17 @@ class Run
                     return ['msg' => $acao->msg];
                     break;
 
-                case '4': //Mostrar resultado
-                    $votacao->estado = $acao->estado;
-                    if (empty($votacao->data_fim)) {
-                        $votacao->data_fim = date('Y-m-d H:i:s');
-                        // vamos exportar para um arquivo externo somente da primeira vez
-                        Votacao::exportar($votacao);
-                    }
+                    // case '4': //Mostrar resultado
+                    //     $votacao->estado = $acao->estado;
+                    //     if (empty($votacao->data_fim)) {
+                    //         $votacao->data_fim = date('Y-m-d H:i:s');
+                    //         // vamos exportar para um arquivo externo somente da primeira vez
+                    //         Votacao::exportar($votacao);
+                    //     }
 
-                    R::store($votacao);
-                    return ['msg' => $acao->msg];
-                    break;
+                    //     R::store($votacao);
+                    //     return ['msg' => $acao->msg];
+                    //     break;
 
                 case '5': // continuar
                     $votacao->estado = $acao->estado;
