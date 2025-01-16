@@ -183,7 +183,7 @@ class Run
         if (in_array($acao, ['iniciar', 'pausar', 'retomar', 'mostrar_resultado', 'finalizar'])) {
             switch ($acao) {
                 case 'iniciar':
-                    R::exec('update votacao set estado = 2 where sessao_id = :sessao_id and estado = 1', [':sessao_id' => $sessao->id]);
+                    R::exec('update votacao set estado = 2, data_ini = :data_ini where sessao_id = :sessao_id and estado = 1', [':data_ini' => date('Y-m-d H:i:s'), ':sessao_id' => $sessao->id]);
                     return ['msg' => 'Votações iniciadas'];
 
                 case 'pausar':
@@ -199,7 +199,12 @@ class Run
                     //     return ['msg' => 'Mostrando resultado'];
 
                 case 'finalizar':
-                    R::exec('update votacao set estado = 5 where sessao_id = :sessao_id and estado = 3', [':sessao_id' => $sessao->id]);
+                    $votacoes = $sessao->withCondition(' estado = 3 ')->ownVotacaoList;
+                    R::exec('update votacao set estado = 5, data_fim = :data_fim where sessao_id = :sessao_id and estado = 3', [':data_fim' => date('Y-m-d H:i:s'), ':sessao_id' => $sessao->id]);
+                    foreach ($votacoes as $_votacao) {
+                        $votacao = Votacao::obter($_votacao->id);
+                        Votacao::exportar($votacao);
+                    }
                     return ['msg' => 'Votações finalizadas'];
             }
         } else {
@@ -240,17 +245,17 @@ class Run
                     return ['msg' => $acao->msg];
                     break;
 
-                    // case '4': //Mostrar resultado
-                    //     $votacao->estado = $acao->estado;
-                    //     if (empty($votacao->data_fim)) {
-                    //         $votacao->data_fim = date('Y-m-d H:i:s');
-                    //         // vamos exportar para um arquivo externo somente da primeira vez
-                    //         Votacao::exportar($votacao);
-                    //     }
+                case '4': //Mostrar resultado
+                    $votacao->estado = $acao->estado;
+                    if (empty($votacao->data_fim)) {
+                        $votacao->data_fim = date('Y-m-d H:i:s');
+                        // vamos exportar para um arquivo externo somente da primeira vez
+                        Votacao::exportar($votacao);
+                    }
 
-                    //     R::store($votacao);
-                    //     return ['msg' => $acao->msg];
-                    //     break;
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
                 case '5': // continuar
                     $votacao->estado = $acao->estado;
