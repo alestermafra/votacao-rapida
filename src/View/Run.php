@@ -84,21 +84,10 @@ class Run
         // print_r($token);
         // exit;
 
-        // se veio msg é porque houve algum problema
-        if (!empty($sessao->msg)) {
-            $tpl->msg = $sessao->msg;
-            $tpl->block('block_msg');
-            $tpl->show();
-            exit;
-        }
-
-        // se não veio msg, vamos continuar
-        $votacoes = $sessao->votacoes;
-
+        // vamos verificar se houve alguma mensagem de erro
         if (!empty($msg = SS::getDel('votacao_msg'))) {
             // aqui trata o retorno do post
             $msg = json_decode($msg);
-
 
             if ($msg->status == 'ok') {
                 $respostas = $msg->data;
@@ -114,6 +103,17 @@ class Run
                 $tpl->block('block_erro');
             }
         } else {
+            // aqui verifica se veio alguma mensagem
+            if (!empty($sessao->msg)) {
+                $tpl->msg = $sessao->msg;
+                $tpl->block('block_msg');
+                $tpl->show();
+                exit;
+            }
+
+            // se não houve nenhuma mensagem de erro do post ou get, continuamos
+            $votacoes = $sessao->votacoes;
+
             foreach ($votacoes as $votacao) {
                 $tpl->votacao = $votacao;
                 $alternativas = $votacao->alternativas;

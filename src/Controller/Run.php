@@ -94,27 +94,24 @@ class Run
 
     protected static function votacaoGet($sessao)
     {
-        // primeiro vamos ver se tem alguma votação com estado 'Em votação'
-        $ret = Votacao::obterEmVotacao($sessao);
+        $sessao->msg = '';
+        $sessao->votacoes = $votacoes = Votacao::obterEmVotacao($sessao);
 
-        $sessao->msg = $ret['msg'];
-        $sessao->votacoes = $ret['votacoes'];
+        if (count($votacoes) == 0) {
+            $sessao->msg = 'Aguarde a próxima votação';
+        }
 
         return SELF::limparSaida($sessao);
     }
 
     protected static function votacaoPost($sessao)
     {
-        // primeiro vamos ver se tem alguma votação com estado 'Em votação'
-        $ret = Votacao::obterEmVotacao($sessao);
-        $msg = $ret['msg'];
-        $votacoes = $ret['votacoes'];
+        $votacoes = Votacao::obterEmVotacao($sessao);
         $data = \Flight::request()->data;
 
-        if ($votacoes == null) {
-            $ret = ['status' => 'erro', 'msg' => $msg . ', acao=' . $data->acao];
-            return $ret;
-        };
+        if (count($votacoes) == 0) {
+            return ['status' => 'erro', 'msg' => 'A votação respondida já foi encerrada.'];
+        }
 
         switch (intval($data->acao)) {
             case '8':
@@ -122,9 +119,11 @@ class Run
                 $respostas = [];
 
                 foreach ($alternativas as $votacao_id => $alternativaId) {
+                    // verifica se a votação está aberta
                     if (in_array($votacao_id, array_column($votacoes, 'id'))) {
                         $votacao = null;
 
+                        // apenas busca o objeto da votacao
                         foreach ($votacoes as $v) {
                             if ($v->id == $votacao_id) {
                                 $votacao = $v;
@@ -132,11 +131,14 @@ class Run
                             }
                         }
 
+                        // confirma a votação se a alternativa escolhida condiz com as alternativas disponíveis
                         if ($votacao && in_array($alternativaId, array_column($votacao->alternativas, 'id'))) {
                             $userAgent = \Flight::request()->user_agent;
                             $resposta = Votacao::computarVoto($sessao, $votacao, $alternativaId, $userAgent);
                             $respostas[] = $resposta;
                         }
+                    } else {
+                        return ['status' => 'erro', 'msg' => 'A votação respondida já foi encerrada.'];
                     }
                 }
 
@@ -144,7 +146,6 @@ class Run
                     return ['status' => 'erro', 'msg' => 'Voto mal formado para ação ' . $data->acao];
                 }
 
-                var_dump($respostas);
                 return ['status' => 'ok', 'data' => $respostas];
         }
 

@@ -34,6 +34,13 @@
 <h1>{S->nome}</h1>
 <hr />
 
+<!-- BEGIN block_erro -->
+    <div>
+        <div class="alert alert-danger">{error}</div>
+        <button class="btn btn-outline-primary" onclick="window.location.reload();">Recarregar</button>
+    </div>
+<!-- END block_erro -->
+
 <!-- BEGIN block_msg -->
     <div>
         <h2>{msg}</h2>
@@ -75,13 +82,6 @@
         </script>
     </div>
 <!-- END block_sucesso -->
-
-<!-- BEGIN block_erro -->
-    <div>
-        <div class="alert alert-success">{error}</div>
-        <a class="btn btn-outline-warning" href="votacao/">Tentar novamente</a>
-    </div>
-<!-- END block_erro -->
 
 <!-- BEGIN block_votacoes -->
 <div class="mb-5">

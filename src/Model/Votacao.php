@@ -30,19 +30,25 @@ class Votacao
     {
         $votacoes = $sessao->withCondition(' estado = 2 ')->ownVotacaoList;
 
-        if (count($votacoes) == 0) {
-            return ['msg' => 'Aguarde a próxima votação', 'votacoes' => null];
-        }
-
         foreach ($votacoes as &$votacao) {
-            if ($sessao->token->tipo != $votacao->tipo) {
-                return ['msg' => 'Token inválido para esta votação', 'votacoes' => null];
-            }
-
             $votacao->alternativas = $votacao->ownAlternativaList;
         }
 
-        return ['msg' => '', 'votacoes' => $votacoes];
+        return $votacoes;
+
+        // if (count($votacoes) == 0) {
+        //     return ['msg' => 'Aguarde a próxima votação', 'votacoes' => null];
+        // }
+
+        // foreach ($votacoes as &$votacao) {
+        //     if ($sessao->token->tipo != $votacao->tipo) {
+        //         return ['msg' => 'Token inválido para esta votação', 'votacoes' => null];
+        //     }
+
+        //     $votacao->alternativas = $votacao->ownAlternativaList;
+        // }
+
+        // return ['msg' => '', 'votacoes' => $votacoes];
     }
 
     // exportar gera um arquivo no filesystem e envia um relatório por email
