@@ -84,10 +84,11 @@
 <!-- END block_erro -->
 
 <!-- BEGIN block_votacoes -->
-    <form method="POST">
-        <div class="mb-3">
+<div class="mb-5">
+    <form id="votacao-form" method="POST">
+        <div class="mb-5">
             <!-- BEGIN block_votacao -->
-                <div class="card mb-3">
+                <div class="votacao card mb-3">
                     <div class="card-header">
                         <h3 class="m-0">{votacao->nome}</h3>
                     </div>
@@ -98,7 +99,7 @@
                         <div>
                             <!-- BEGIN block_alternativa -->
                                 <div class="alternativa">
-                                    <input type="radio" name="alternativas[{votacao->id}]" id="alternativa-{alternativa->id}" value="{alternativa->id}">
+                                    <input type="radio" name="alternativas[{votacao->id}]" id="alternativa-{alternativa->id}" value="{alternativa->id}" required>
                                     <label class="form-check-label" for="alternativa-{alternativa->id}">{alternativa->texto}</label>
                                 </div>
                             <!-- END block_alternativa -->
@@ -109,6 +110,30 @@
         </div>
 
         <input type="hidden" name="acao" value="8">
-        <button type="submit" class="btn btn-primary">Enviar</button>
+
+        <div id="required-options-error" class="alert alert-danger">
+            Você precisa responder todas as votações para continuar.
+        </div>
+
+        <button type="submit" class="btn btn-lg btn-primary" style="width: 200px; display: none">Confirmar</button>
     </form>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('input[type=radio]').change(function() {
+            if(allVotesAnswered()) {
+                $('#required-options-error').hide();
+                $('button[type=submit]').show();
+            }
+        });
+
+        function allVotesAnswered() {
+            const votacoes = $('.votacao').length;
+            const respostas = $('.votacao input[type=radio]:checked').length;
+
+            return votacoes == respostas;
+        }
+    });
+</script>
 <!-- END block_votacoes -->
