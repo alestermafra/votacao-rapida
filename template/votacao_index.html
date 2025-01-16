@@ -4,6 +4,10 @@
         margin: 10px;
     }
 
+    .resposta:not(:last-child) {
+        margin-bottom: 10px;
+    }
+
     .alternativa:not(:last-child) {
         margin-bottom: 10px;
     }
@@ -51,8 +55,9 @@
 
         <div class="data alert alert-success hide my-2">
             <!-- BEGIN block_resposta -->
-                <div>
-                    <span class="text-secondary">{resposta->votacao->nome}:</span> {resposta->alternativa->texto}
+                <div class="resposta">
+                    <div class="text-secondary">{resposta->votacao->nome}:</div>
+                    <div class="font-weight-bold">{resposta->alternativa->texto}</div>
                 </div>
             <!-- END block_resposta -->
         </div>
