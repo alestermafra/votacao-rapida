@@ -104,7 +104,7 @@ class Email
 
     public static function sendNovoGerente($sessao, $gerente) {}
 
-    public static function sendExportarVotacao($export)
+    public static function sendExportarVotacao($export, $now = false)
     {
         $votacao = json_decode(json_encode($export));
         $tpl = new Template(TPL . '/email/exportarVotacao.html');
@@ -182,7 +182,10 @@ class Email
                 ['nome' => 'headtop.png', 'data' => base64_encode(file_get_contents(TPL . '/email/headtop.png'))],
             ],
         ]);
-        exec('php ' . ROOTDIR . '/cli/processarEmailsFila.php > /dev/null &');
+
+        if ($now) {
+            exec('php ' . ROOTDIR . '/cli/processarEmailsFila.php > /dev/null &');
+        }
         return true;
     }
 

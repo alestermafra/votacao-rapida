@@ -52,7 +52,7 @@ class Votacao
     }
 
     // exportar gera um arquivo no filesystem e envia um relatório por email
-    public static function exportar($votacao)
+    public static function exportar($votacao, $now = false)
     {
         $sessao = clone $votacao->sessao;
         $export = clone $votacao;

@@ -205,6 +205,7 @@ class Run
                         $votacao = Votacao::obter($_votacao->id);
                         Votacao::exportar($votacao);
                     }
+                    exec('php ' . ROOTDIR . '/cli/processarEmailsFila.php > /dev/null &');
                     return ['msg' => 'Votações finalizadas'];
             }
         } else {
@@ -250,7 +251,7 @@ class Run
                     if (empty($votacao->data_fim)) {
                         $votacao->data_fim = date('Y-m-d H:i:s');
                         // vamos exportar para um arquivo externo somente da primeira vez
-                        Votacao::exportar($votacao);
+                        Votacao::exportar($votacao, true);
                     }
 
                     R::store($votacao);
