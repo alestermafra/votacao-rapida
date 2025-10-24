@@ -58,7 +58,7 @@ class Email
 
         $ret = SELF::adicionarFila($sessao, [
             'destinatario' => $token->email,
-            'bcc' => $sessao->email, // manda com cópia para o email da sessão
+            // 'bcc' => $sessao->email, // manda com cópia para o email da sessão // removido bcc para evitar sobrecarga no envio
             'assunto' => 'Credenciais de votação: ' . $sessao->nome . ' - ' . $sessao->quando,
             'corpo' => $corpo,
             'alt' => $corpo,
