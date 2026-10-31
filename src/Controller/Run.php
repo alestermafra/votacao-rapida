@@ -94,49 +94,62 @@ class Run
 
     protected static function votacaoGet($sessao)
     {
-        // primeiro vamos ver se tem alguma votação com estado 'Em votação'
-        $ret = Votacao::obterEmVotacao($sessao);
-        $sessao->msg = $ret['msg'];
-        $sessao->render_form = $ret['votacao'];
+        $sessao->msg = '';
+        $sessao->votacoes = $votacoes = Votacao::obterEmVotacao($sessao);
 
-        if ($sessao->render_form != null) {
-            $sessao->render_form->acao = ['cod' => 8, 'nome' => 'Responder'];
-        };
+        if (count($votacoes) == 0) {
+            $sessao->msg = 'Aguarde a próxima votação';
+        }
 
         return SELF::limparSaida($sessao);
     }
 
     protected static function votacaoPost($sessao)
     {
-        // primeiro vamos ver se tem alguma votação com estado 'Em votação'
-        $ret = Votacao::obterEmVotacao($sessao);
-        $msg = $ret['msg'];
-        $votacao = $ret['votacao'];
+        $votacoes = Votacao::obterEmVotacao($sessao);
         $data = \Flight::request()->data;
 
-        if ($votacao == null) {
-            $ret = ['status' => 'erro', 'msg' => $msg . ', acao=' . $data->acao];
-            return $ret;
-        };
+        if (count($votacoes) == 0) {
+            return ['status' => 'erro', 'msg' => 'A votação respondida já foi encerrada.'];
+        }
 
         switch (intval($data->acao)) {
             case '8':
-                //vamos ver se o voto veio para votação correta
-                if (
-                    $votacao->id == $data->votacao_id &&
-                    !empty($data->alternativa_id) &&
-                    in_array($data->alternativa_id, array_column($votacao->ownAlternativaList, 'id'))
-                ) {
-                    $data->user_agent = \Flight::request()->user_agent;
-                    $resposta = Votacao::computarVoto($sessao, $votacao, $data);
-                    return ['status' => 'ok', 'data' => $resposta];
+                $alternativas = $data->alternativas;
+                $respostas = [];
+
+                foreach ($alternativas as $votacao_id => $alternativaId) {
+                    // verifica se a votação está aberta
+                    if (in_array($votacao_id, array_column($votacoes, 'id'))) {
+                        $votacao = null;
+
+                        // apenas busca o objeto da votacao
+                        foreach ($votacoes as $v) {
+                            if ($v->id == $votacao_id) {
+                                $votacao = $v;
+                                break;
+                            }
+                        }
+
+                        // confirma a votação se a alternativa escolhida condiz com as alternativas disponíveis
+                        if ($votacao && in_array($alternativaId, array_column($votacao->alternativas, 'id'))) {
+                            $userAgent = \Flight::request()->user_agent;
+                            $resposta = Votacao::computarVoto($sessao, $votacao, $alternativaId, $userAgent);
+                            $respostas[] = $resposta;
+                        }
+                    } else {
+                        return ['status' => 'erro', 'msg' => 'A votação respondida já foi encerrada.'];
+                    }
                 }
 
-                return ['status' => 'erro', 'msg' => 'Voto mal formado para ação ' . $data['acao']];
-                break;
+                if (count($respostas) == 0) {
+                    return ['status' => 'erro', 'msg' => 'Voto mal formado para ação ' . $data->acao];
+                }
+
+                return ['status' => 'ok', 'data' => $respostas];
         }
 
-        return ['status' => 'erro', 'msg' => 'Ação inválida: ' . $data['acao']];
+        return ['status' => 'erro', 'msg' => 'Ação inválida: ' . $data->acao];
     }
 
     protected static function apoioGet($sessao)
@@ -165,95 +178,127 @@ class Run
     {
         $data = \Flight::request()->data;
 
-        // se ação não estiver dentro das ações predefinidas, vamos abortar
-        if (!$acao = R::findOne('acao', "cod = ?", [$data['acao']])) {
-            return ['msg' => 'Ação inválida: ' . $data['acao']];
-        }
+        $acao = $data['acao'] ?? null;
 
-        // vmos carregar a votação
-        $votacao = Votacao::obter($data->votacao_id);
+        if (in_array($acao, ['iniciar', 'pausar', 'retomar', 'mostrar_resultado', 'finalizar'])) {
+            switch ($acao) {
+                case 'iniciar':
+                    R::exec('update votacao set estado = 2, data_ini = :data_ini where sessao_id = :sessao_id and estado = 1', [':data_ini' => date('Y-m-d H:i:s'), ':sessao_id' => $sessao->id]);
+                    return ['msg' => 'Votações iniciadas'];
 
-        switch (intval($data['acao'])) {
-            case '0': // mostrar na tela
-                $votacao->estado = $acao->estado;
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case 'pausar':
+                    R::exec('update votacao set estado = 3 where sessao_id = :sessao_id and estado = 2', [':sessao_id' => $sessao->id]);
+                    return ['msg' => 'Votações pausadas'];
 
-            case '1': // fechar
-                $votacao->estado = $acao->estado;
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case 'retomar':
+                    R::exec('update votacao set estado = 2 where sessao_id = :sessao_id and estado = 3', [':sessao_id' => $sessao->id]);
+                    return ['msg' => 'Votações retomadas'];
 
-            case '2': // iniciar votação
-                // limpar votos existentes, se houver
-                Votacao::limparVotosExistentes($votacao);
+                    // case 'mostrar_resultado':
+                    //     R::exec('update votacao set estado = 4 where sessao_id = :sessao_id and estado = 3', [':sessao_id' => $sessao->id]);
+                    //     return ['msg' => 'Mostrando resultado'];
 
-                $votacao->estado = $acao->estado;
-                $votacao->data_ini = date('Y-m-d H:i:s');
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case 'finalizar':
+                    $votacoes = $sessao->withCondition(' estado = 3 ')->ownVotacaoList;
+                    R::exec('update votacao set estado = 5, data_fim = :data_fim where sessao_id = :sessao_id and estado = 3', [':data_fim' => date('Y-m-d H:i:s'), ':sessao_id' => $sessao->id]);
+                    foreach ($votacoes as $_votacao) {
+                        $votacao = Votacao::obter($_votacao->id);
+                        Votacao::exportar($votacao);
+                    }
+                    exec('php ' . ROOTDIR . '/cli/processarEmailsFila.php > /dev/null &');
+                    return ['msg' => 'Votações finalizadas'];
+            }
+        } else {
+            // se ação não estiver dentro das ações predefinidas, vamos abortar
+            if (!$acao = R::findOne('acao', "cod = ?", [$data['acao']])) {
+                return ['msg' => 'Ação inválida: ' . $data['acao']];
+            }
 
-            case '3': // pausar
-                $votacao->estado = $acao->estado;
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+            // vmos carregar a votação
+            $votacao = Votacao::obter($data->votacao_id);
 
-            case '4': //Mostrar resultado
-                $votacao->estado = $acao->estado;
-                if (empty($votacao->data_fim)) {
-                    $votacao->data_fim = date('Y-m-d H:i:s');
-                    // vamos exportar para um arquivo externo somente da primeira vez
-                    Votacao::exportar($votacao);
-                }
+            switch (intval($data['acao'])) {
+                case '0': // mostrar na tela
+                    $votacao->estado = $acao->estado;
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case '1': // fechar
+                    $votacao->estado = $acao->estado;
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-            case '5': // continuar
-                $votacao->estado = $acao->estado;
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case '2': // iniciar votação
+                    // limpar votos existentes, se houver
+                    Votacao::limparVotosExistentes($votacao);
 
-            case '6': //Reiniciar
-                if ($votacao->estado == 5) {
-                    return ['msg' => 'Impossível reiniciar depois de encerrada'];
-                }
+                    $votacao->estado = $acao->estado;
+                    $votacao->data_ini = date('Y-m-d H:i:s');
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-                // limpar votos existentes, se houver
-                Votacao::limparVotosExistentes($votacao);
+                case '3': // pausar
+                    $votacao->estado = $acao->estado;
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-                $votacao->estado = $acao->estado;
-                $votacao->data_ini = date('Y-m-d H:i:s');
-                R::store($votacao);
-                return ['msg' => $acao->msg];
-                break;
+                case '4': //Mostrar resultado
+                    $votacao->estado = $acao->estado;
+                    if (empty($votacao->data_fim)) {
+                        $votacao->data_fim = date('Y-m-d H:i:s');
+                        // vamos exportar para um arquivo externo somente da primeira vez
+                        Votacao::exportar($votacao, true);
+                    }
 
-            case '7': // finalizar
-                $votacao->estado = $acao->estado;
-                R::store($votacao);
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-                return ['msg' => $acao->msg];
-                break;
+                case '5': // continuar
+                    $votacao->estado = $acao->estado;
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
 
-            case '9': // criar instantaneo
-                // aqui não precisa de $votacao, pois vai criar uma nova
-                $votacao = Votacao::novoInstantaneo($sessao, trim($data['texto']));
-                //$votacao->sessao_id = $sessao->id;
-                //R::store($votacao);
+                case '6': //Reiniciar
+                    if ($votacao->estado == 5) {
+                        return ['msg' => 'Impossível reiniciar depois de encerrada'];
+                    }
 
-                return ['status' => 'ok', 'msg' => 'Votação adicionada com sucesso'];
-                break;
+                    // limpar votos existentes, se houver
+                    Votacao::limparVotosExistentes($votacao);
 
-            case '10':
-                R::trash($votacao);
-                return ['status' => 'ok', 'msg' => 'Votação excluída com sucesso'];
-                break;
+                    $votacao->estado = $acao->estado;
+                    $votacao->data_ini = date('Y-m-d H:i:s');
+                    R::store($votacao);
+                    return ['msg' => $acao->msg];
+                    break;
+
+                case '7': // finalizar
+                    $votacao->estado = $acao->estado;
+                    R::store($votacao);
+
+                    return ['msg' => $acao->msg];
+                    break;
+
+                case '9': // criar instantaneo
+                    // aqui não precisa de $votacao, pois vai criar uma nova
+                    $votacao = Votacao::novoInstantaneo($sessao, trim($data['texto']));
+                    //$votacao->sessao_id = $sessao->id;
+                    //R::store($votacao);
+
+                    return ['status' => 'ok', 'msg' => 'Votação adicionada com sucesso'];
+                    break;
+
+                case '10':
+                    R::trash($votacao);
+                    return ['status' => 'ok', 'msg' => 'Votação excluída com sucesso'];
+                    break;
+            }
         }
     }
 
@@ -267,41 +312,23 @@ class Run
     protected static function painel($sessao)
     {
         // vamos ver se tem alguma votação para ser exibida na tela
-        $painel = '';
-        foreach ($sessao->ownVotacaoList as $votacao) {
+        $votacoes = $sessao->withCondition(' estado in (1, 2, 3, 4) ')->ownVotacaoList;
 
-            switch ($votacao->estado) {
-                case '1': // em tela
-                case '2': // em votacao
-                case '3': // em pausa
-                    // pegar as alternativas
-                    $votacao->alternativas = $votacao->ownAlternativaList;
-                    $painel = $votacao;
-                    break;
-                case '4': // resultado
-                    // mostra o resultado
-                    $votacao->respostas = Votacao::listarAlternativa($votacao);
-                    $votacao->votos = Votacao::listarResposta($votacao->id);
-                    $painel = $votacao;
-                    break;
-            }
-            if ($painel) break;
+        foreach ($votacoes as &$votacao) {
+            $votacao->alternativas = $votacao->ownAlternativaList;
+            $votacao->respostas = Votacao::listarAlternativa($votacao);
+            $votacao->votos = Votacao::listarResposta($votacao->id);
+            $votacao->computados = Votacao::contarResposta($votacao);
+            $votacao->estado = R::getCell('SELECT nome FROM estado WHERE cod = :cod', [':cod' => $votacao->estado]);
         }
 
-        if (!$painel) {
+        if (count($votacoes) == 0) {
             $sessao->msg = 'Sem votação aberta';
             SELF::limparSaida($sessao);
             return SELF::limparSaida($sessao);
         }
 
-        // vamos obter o total de votos computados
-        // precisa para 2,3 e 4
-        $painel->computados = Votacao::contarResposta($painel);
-
-        // vamos colocar o nome do estado
-        $painel->estado = R::getCell('SELECT nome FROM estado WHERE cod = ' . $painel->estado);
-
-        $sessao->em_tela = $painel;
+        $sessao->votacoes = $votacoes;
         return SELF::limparSaida($sessao);
     }
 

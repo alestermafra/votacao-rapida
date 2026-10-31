@@ -3,38 +3,70 @@
     .space {
         margin: 10px;
     }
+
+    .resposta:not(:last-child) {
+        margin-bottom: 10px;
+    }
+
+    .alternativa:not(:last-child) {
+        margin-bottom: 10px;
+    }
+
+    .alternativa label {
+        margin-left: 10px;
+        font-size: 18px;
+        vertical-align: middle;
+        -webkit-touch-callout: none; 
+        -webkit-user-select: none; 
+        -khtml-user-select: none; 
+        -moz-user-select: none; 
+        -ms-user-select: none; 
+        user-select: none;
+    }
+
+    .alternativa input[type="radio"] {
+        height: 20px;
+        width: 20px;
+        vertical-align: middle;
+    }
 </style>
 
 <h1>{S->nome}</h1>
 <hr />
+
+<!-- BEGIN block_erro -->
+    <div>
+        <div class="alert alert-danger">{error}</div>
+        <button class="btn btn-outline-primary" onclick="window.location.reload();">Recarregar</button>
+    </div>
+<!-- END block_erro -->
+
 <!-- BEGIN block_msg -->
-<div>
-    <h2>{msg}</h2>
-    <br>
-    <button class="btn btn-outline-primary" onclick="window.location.reload();">Recarregar</button>
-</div>
+    <div>
+        <h2>{msg}</h2>
+        <br>
+        <button class="btn btn-outline-primary" onclick="window.location.reload();">Recarregar</button>
+    </div>
 <!-- END block_msg -->
 
-<!-- BEGIN block_em_votacao -->
-<div>
-    <div class="mb-2">
-        <span class="badge badge-info">{V->tipo}</span>
-        <span class="badge badge-info">{S->token->apelido}</span>
-        <span id="estado" class="badge {V->estado_class}">{V->estado}</span>
-    </div>
-
-    <!-- BEGIN block_msg_sucesso -->
+<!-- BEGIN block_sucesso -->
     <div id="sucesso">
-        <h3>{V->nome}</h3>
         <div class="alert alert-success">
-            {M->msg}
+            Voto computado com sucesso!
         </div>
+
         <div class="mb-2">
             <button class="mostrar_btn btn btn-outline-success">Mostrar voto</button>
             <button class="btn btn-outline-primary ml-4" onclick="window.location.reload();">Recarregar</button>
         </div>
+
         <div class="data alert alert-success hide my-2">
-            <span class="text-secondary">Alternativa escolhida:</span> {M->voto->alternativa->texto}
+            <!-- BEGIN block_resposta -->
+                <div class="resposta">
+                    <div class="text-secondary">{resposta->votacao->nome}:</div>
+                    <div class="font-weight-bold">{resposta->alternativa->texto}</div>
+                </div>
+            <!-- END block_resposta -->
         </div>
         <p class="text-secondary my-4">
             Recarregue para votar novamente ou para ir para a próxima votação.<br>
@@ -49,34 +81,59 @@
             });
         </script>
     </div>
-    <!-- END block_msg_sucesso -->
+<!-- END block_sucesso -->
 
-    <!-- BEGIN block_msg_erro -->
-    <div>
-        <div class="alert alert-success">{M->msg}</div>
-        <a class="btn btn-outline-warning" href="votacao/">Tentar novamente</a>
-    </div>
-    <!-- END block_msg_erro -->
+<!-- BEGIN block_votacoes -->
+<div class="mb-5">
+    <form id="votacao-form" method="POST">
+        <div class="mb-5">
+            <!-- BEGIN block_votacao -->
+                <div class="votacao card mb-4">
+                    <div class="card-header">
+                        <h3 class="m-0">{votacao->nome}</h3>
+                    </div>
 
-    <!-- BEGIN block_form -->
-    <div>
-        {form}
-        <script type="text/javascript">
-            $(function () {
-                var max = 3;
+                    <div class="card-body">
+                        <div class="text-secondary mb-3">{votacao->descricao}</div>
 
-                $('input[type="checkbox"]').click(function () {
-                    var countcheck = $('input[type="checkbox"]:checked').length;
-                    console.log(countcheck);
-                    if (countcheck >= max) {
-                        $("input:checkbox:not(:checked)").attr("disabled", true);
-                    } else {
-                        $("input:checkbox").attr("disabled", false);
-                    }
-                });
-            });
-        </script>
-    </div>
-    <!-- END block_form -->
+                        <div>
+                            <!-- BEGIN block_alternativa -->
+                                <div class="alternativa">
+                                    <input type="radio" name="alternativas[{votacao->id}]" id="alternativa-{alternativa->id}" value="{alternativa->id}" required>
+                                    <label class="form-check-label" for="alternativa-{alternativa->id}">{alternativa->texto}</label>
+                                </div>
+                            <!-- END block_alternativa -->
+                        </div>
+                    </div>
+                </div>
+            <!-- END block_votacao -->
+        </div>
+
+        <input type="hidden" name="acao" value="8">
+
+        <div id="required-options-error" class="alert alert-danger">
+            Você precisa responder todas as votações para continuar.
+        </div>
+
+        <button type="submit" class="btn btn-lg btn-primary" style="width: 200px; display: none">Confirmar</button>
+    </form>
 </div>
-<!-- END block_em_votacao -->
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('input[type=radio]').change(function() {
+            if(allVotesAnswered()) {
+                $('#required-options-error').hide();
+                $('button[type=submit]').show();
+            }
+        });
+
+        function allVotesAnswered() {
+            const votacoes = $('.votacao').length;
+            const respostas = $('.votacao input[type=radio]:checked').length;
+
+            return votacoes == respostas;
+        }
+    });
+</script>
+<!-- END block_votacoes -->

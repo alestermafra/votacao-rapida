@@ -72,7 +72,7 @@ class Run
         // vamos tentar votar com os tokens existentes
         foreach ($token as $t) {
             $sessao = SELF::obterSessao($hash, $t);
-            if (empty($sessao->msg) && isset($sessao->render_form)) {
+            if (empty($sessao->msg) && isset($sessao->votacoes)) {
                 $token = $t;
                 break;
             }
@@ -84,51 +84,55 @@ class Run
         // print_r($token);
         // exit;
 
-        // se veio msg é porque houve algum problema
-        if (!empty($sessao->msg)) {
-            $tpl->msg = $sessao->msg;
-            $tpl->block('block_msg');
-            $tpl->show();
-            exit;
-        }
-
-        // se não veio msg, vamos continuar
-        $v = $sessao->render_form;
-
+        // vamos verificar se houve alguma mensagem de erro
         if (!empty($msg = SS::getDel('votacao_msg'))) {
             // aqui trata o retorno do post
             $msg = json_decode($msg);
 
             if ($msg->status == 'ok') {
-                $msg->msg = 'Voto computado com sucesso';
-                $msg->datajson = json_encode($msg->data);
-                $msg->voto = $msg->data;
-                $block = 'block_msg_sucesso';
+                $respostas = $msg->data;
+
+                foreach ($respostas as $resposta) {
+                    $tpl->resposta = $resposta;
+                    $tpl->block('block_resposta');
+                }
+
+                $tpl->block('block_sucesso');
             } else {
-                $msg->datajson = '';
-                $block = 'block_msg_erro';
+                $tpl->error = $msg->msg;
+                $tpl->block('block_erro');
             }
-            $tpl->M = $msg;
-
-            $tpl->V = $v;
-            $tpl->block($block);
         } else {
+            // aqui verifica se veio alguma mensagem
+            if (!empty($sessao->msg)) {
+                $tpl->msg = $sessao->msg;
+                $tpl->block('block_msg');
+                $tpl->show();
+                exit;
+            }
+
+            // se não houve nenhuma mensagem de erro do post ou get, continuamos
+            $votacoes = $sessao->votacoes;
+
+            foreach ($votacoes as $votacao) {
+                $tpl->votacao = $votacao;
+                $alternativas = $votacao->alternativas;
+
+                foreach ($alternativas as $alternativa) {
+                    $tpl->alternativa = $alternativa;
+                    $tpl->block('block_alternativa');
+                }
+
+                $tpl->block('block_votacao');
+            }
+
+            $tpl->block('block_votacoes');
             // aqui mostra o form de votacao
-
-            $tpl->V = $v;
-            $form = new Form($v);
-            $tpl->form = $form->render();
-            $tpl->block('block_form');
+            // $tpl->V = $v;
+            // $form = new Form($v);
+            // $tpl->form = $form->render();
+            // $tpl->block('block_form');
         }
-
-        $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
-        if (!empty($token->apelido)) {
-            $v->tipo_class = 'hide';
-        } else {
-            $v->tipo_class = '';
-        }
-        $v->estado = 'Em votação';
-        $v->estado_class = SELF::getEstadoClass($v->estado);
 
         $tpl->show();
     }
@@ -136,10 +140,12 @@ class Run
     public static function votacaoPost($data)
     {
         list($hash, $token) = SS::verificaSessao('votacao');
+
         foreach ($token as $t) {
             $sessao = SELF::obterSessao($hash, $t);
-            if (empty($sessao->msg) && isset($sessao->render_form)) break;
+            if (empty($sessao->msg) && isset($sessao->votacoes)) break;
         }
+
         //$sessao = SELF::obterSessao($hash, $token);
 
         // post de formulario
@@ -163,7 +169,14 @@ class Run
 
         // acoes para a rota de apoio
         if (isset($_GET['acao'])) {
-            $data = ['acao' => $_GET['acao'], 'votacao_id' => $_GET['votacao_id']];
+            $data = [
+                'acao' => $_GET['acao']
+            ];
+
+            if (isset($_GET['votacao_id'])) {
+                $data['votacao_id'] = $_GET['votacao_id'];
+            }
+
             $res = Api::post($hash, $token, $data);
             // temos de devolver res de alguma forma se houver erro
             //print_r($res);exit;
@@ -175,8 +188,40 @@ class Run
         $tpl = new Template('apoio_index.html');
 
         $tpl->S = $sessao;
+
         foreach ($sessao->votacoes as $v) {
             $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
+
+            if ($v->estado === 'Fechada') {
+                $tpl->v = $v;
+                $tpl->block('block_votacao_fechada');
+            }
+
+            if ($v->estado === 'Em exibição') {
+                $tpl->v = $v;
+                $tpl->block('block_votacao_em_exibicao');
+            }
+
+            if ($v->estado === 'Em votação') {
+                $tpl->v = $v;
+                $tpl->block('block_em_votacao');
+            }
+
+            if ($v->estado === 'Em pausa') {
+                $tpl->v = $v;
+                $tpl->block('block_em_pausa');
+            }
+
+            if ($v->estado === 'Resultado') {
+                $tpl->v = $v;
+                $tpl->block('block_resultado');
+            }
+
+            if ($v->estado === 'Finalizado') {
+                $tpl->v = $v;
+                $tpl->block('block_finalizado');
+            }
+
             $v->estadoclass = SELF::getEstadoClass($v->estado);
             $v->accordion = new \stdClass();
             if ($v->estado == 'Fechada' or $v->estado == 'Finalizado') {
@@ -236,70 +281,100 @@ class Run
             exit;
         }
 
-        $v = $sessao->em_tela;
-        $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
+        $votacoes = $sessao->votacoes;
 
-        // vamos formatar a apresentação do estado
-        $v->estado_class = SElF::getEstadoClass($v->estado);
+        foreach ($votacoes as &$votacao) {
+            $tpl->votacao = $votacao;
 
-        $tpl->V = $v;
+            $votacao->tipo = $votacao->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
 
-        if ($v->estado == 'Resultado') {
-
-            if (!empty($v->respostas)) {
-                foreach ($v->respostas as $r) {
-                    $tpl->R = $r;
-                    $tpl->block('resultado_resposta');
-                }
+            if ($votacao->estado === 'Em votação' || $votacao->estado === 'Em pausa') {
+                $votacao->estado_class = self::getEstadoClass($votacao->estado);
+                $tpl->block('block_estado');
             }
 
-            //vamos mostrar o total de votos computados
-            $tpl->block('block_computados');
-
-            if (!empty($v->votos) && $v->tipo == 'Voto aberto') {
-                $i = 0;
-                if (count($v->votos) > 10) {
-                    $dividir = intdiv(count($v->votos), 3);
-                } else {
-                    $dividir = count($v->votos) - 1;
-                }
-                // ordenando por apelido
-                // usort($v->votos, function ($a, $b) {
-                //     return strcmp(strtoupper($a->apelido), strtoupper($b->apelido));
-                // });
-                foreach ($v->votos as $voto) {
-                    $tpl->voto = $voto;
-                    $tpl->block('resultado_voto');
-                    if ($dividir == $i or $dividir * 2 == $i) {
-                        $tpl->block('block_coluna');
-                    }
-                    $i++;
-                }
-                $tpl->block('block_coluna');
+            // exibe os votos
+            foreach ($votacao->votos as $voto) {
+                $tpl->voto = $voto;
+                $tpl->block('block_voto');
             }
 
-            $tpl->block('block_resultado');
-        } elseif ($v->estado == 'Em exibição' || $v->estado == 'Em votação' || $v->estado == 'Em pausa') {
-
-            if ($v->estado == 'Em votação') {
-                $tpl->block('block_em_votacao');
-            }
-            $tpl->block('block_computados');
-
-            if (!empty($v->descricao)) {
-                $tpl->block('exibicao_descricao');
+            // exibe as respostas
+            foreach ($votacao->respostas as $r) {
+                $tpl->R = $r;
+                $tpl->block('block_r');
             }
 
-            if (!empty($v->alternativas)) {
-                foreach ($v->alternativas as $a) {
-                    $tpl->alternativa = $a->texto;
-                    $tpl->block('exibicao_alternativa');
-                }
-            }
-            $tpl->block('block_exibicao');
+            $tpl->block('block_total_votos');
+            $tpl->block('block_votacao');
         }
 
         $tpl->show();
+
+        // $v = $sessao->em_tela;
+        // $v->tipo = $v->tipo == 'aberta' ? 'Voto aberto' : 'Voto fechado';
+
+        // // vamos formatar a apresentação do estado
+        // $v->estado_class = SElF::getEstadoClass($v->estado);
+
+        // $tpl->V = $v;
+
+        // if ($v->estado == 'Resultado') {
+
+        //     if (!empty($v->respostas)) {
+        //         foreach ($v->respostas as $r) {
+        //             $tpl->R = $r;
+        //             $tpl->block('resultado_resposta');
+        //         }
+        //     }
+
+        //     //vamos mostrar o total de votos computados
+        //     $tpl->block('block_computados');
+
+        //     if (!empty($v->votos) && $v->tipo == 'Voto aberto') {
+        //         $i = 0;
+        //         if (count($v->votos) > 10) {
+        //             $dividir = intdiv(count($v->votos), 3);
+        //         } else {
+        //             $dividir = count($v->votos) - 1;
+        //         }
+        //         // ordenando por apelido
+        //         // usort($v->votos, function ($a, $b) {
+        //         //     return strcmp(strtoupper($a->apelido), strtoupper($b->apelido));
+        //         // });
+        //         foreach ($v->votos as $voto) {
+        //             $tpl->voto = $voto;
+        //             $tpl->block('resultado_voto');
+        //             if ($dividir == $i or $dividir * 2 == $i) {
+        //                 $tpl->block('block_coluna');
+        //             }
+        //             $i++;
+        //         }
+        //         $tpl->block('block_coluna');
+        //     }
+
+        //     $tpl->block('block_resultado');
+        // } elseif ($v->estado == 'Em exibição' || $v->estado == 'Em votação' || $v->estado == 'Em pausa') {
+
+        //     if ($v->estado == 'Em votação') {
+        //         $tpl->block('block_em_votacao');
+        //     }
+        //     $tpl->block('block_computados');
+
+        //     if (!empty($v->descricao)) {
+        //         $tpl->block('exibicao_descricao');
+        //     }
+
+        //     if (!empty($v->alternativas)) {
+        //         foreach ($v->alternativas as $a) {
+        //             $tpl->alternativa = $a->texto;
+        //             $tpl->block('exibicao_alternativa');
+        //         }
+        //     }
+        //     $tpl->block('block_exibicao');
+        // }
+
+        // $tpl->show();
     }
 
     public static function recepcao()
@@ -402,7 +477,7 @@ class Run
         }
         $tpl->show();
     }
-    
+
     protected static function getEstadoClass($estado)
     {
         switch ($estado) {

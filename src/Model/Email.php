@@ -58,7 +58,7 @@ class Email
 
         $ret = SELF::adicionarFila($sessao, [
             'destinatario' => $token->email,
-            'bcc' => $sessao->email, // manda com cópia para o email da sessão
+            // 'bcc' => $sessao->email, // manda com cópia para o email da sessão // removido bcc para evitar sobrecarga no envio
             'assunto' => 'Credenciais de votação: ' . $sessao->nome . ' - ' . $sessao->quando,
             'corpo' => $corpo,
             'alt' => $corpo,
@@ -104,7 +104,7 @@ class Email
 
     public static function sendNovoGerente($sessao, $gerente) {}
 
-    public static function sendExportarVotacao($export)
+    public static function sendExportarVotacao($export, $now = false)
     {
         $votacao = json_decode(json_encode($export));
         $tpl = new Template(TPL . '/email/exportarVotacao.html');
@@ -182,7 +182,10 @@ class Email
                 ['nome' => 'headtop.png', 'data' => base64_encode(file_get_contents(TPL . '/email/headtop.png'))],
             ],
         ]);
-        exec('php ' . ROOTDIR . '/cli/processarEmailsFila.php > /dev/null &');
+
+        if ($now) {
+            exec('php ' . ROOTDIR . '/cli/processarEmailsFila.php > /dev/null &');
+        }
         return true;
     }
 

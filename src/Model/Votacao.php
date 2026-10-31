@@ -28,23 +28,31 @@ class Votacao
 
     public static function obterEmVotacao($sessao)
     {
-        $em_votacao = 2; // cod da tabela estado
+        $votacoes = $sessao->withCondition(' estado = 2 ')->ownVotacaoList;
 
-        foreach ($sessao->ownVotacaoList as $votacao) {
-            if ($votacao->estado == $em_votacao) {
-                if ($sessao->token->tipo != $votacao->tipo) {
-                    return ['msg' => 'Token inválido para esta votação', 'votacao' => null];
-                }
-
-                $votacao->alternativas = $votacao->ownAlternativaList;
-                return ['msg' => '', 'votacao' => $votacao];
-            }
+        foreach ($votacoes as &$votacao) {
+            $votacao->alternativas = $votacao->ownAlternativaList;
         }
-        return ['msg' => 'Aguarde a próxima votação', 'votacao' => null];
+
+        return $votacoes;
+
+        // if (count($votacoes) == 0) {
+        //     return ['msg' => 'Aguarde a próxima votação', 'votacoes' => null];
+        // }
+
+        // foreach ($votacoes as &$votacao) {
+        //     if ($sessao->token->tipo != $votacao->tipo) {
+        //         return ['msg' => 'Token inválido para esta votação', 'votacoes' => null];
+        //     }
+
+        //     $votacao->alternativas = $votacao->ownAlternativaList;
+        // }
+
+        // return ['msg' => '', 'votacoes' => $votacoes];
     }
 
     // exportar gera um arquivo no filesystem e envia um relatório por email
-    public static function exportar($votacao)
+    public static function exportar($votacao, $now = false)
     {
         $sessao = clone $votacao->sessao;
         $export = clone $votacao;
@@ -201,7 +209,6 @@ class Votacao
             $votacao->obs = $data->obs;
             R::store($votacao);
             return ['status' => 'ok', 'data' => 'Editado observação pós votação'];
-
         } else {
             // se ja tiver sido votado não faremos nada, não precisamos gerar log
             return ['status' => 'erro', 'data' => 'Impossível editar uma votação que já foi votada'];
@@ -265,7 +272,7 @@ class Votacao
         return true;
     }
 
-    public static function computarVoto($sessao, $votacao, $data)
+    public static function computarVoto($sessao, $votacao, $alternativaId, $userAgent)
     {
         //vamos invalidar votos anteriores se houver
         R::exec(
@@ -275,16 +282,17 @@ class Votacao
 
         //vamos guardar o novo voto
         $resposta = R::dispense('resposta');
-        $resposta->votacao_id = $data->votacao_id;
-        $resposta->alternativa_id = $data->alternativa_id;
+        $resposta->votacao_id = $votacao->id;
+        $resposta->alternativa_id = $alternativaId;
         $resposta->token = $sessao->token->token;
         $resposta->apelido = $sessao->token->apelido;
         $resposta->datetime = date("Y-m-d H:i:s");
-        $resposta->dispositivo = substr($data->user_agent, 0, 190);
+        $resposta->dispositivo = substr($userAgent, 0, 190);
         $resposta->signature = sha1(json_encode($resposta) . $sessao->hash);
         $resposta->last = 1;
         R::store($resposta);
         $resposta->alternativa;
+        $resposta->votacao;
 
         return $resposta;
     }
