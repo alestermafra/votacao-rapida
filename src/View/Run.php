@@ -4,6 +4,7 @@ namespace Uspdev\Votacao\View;
 
 use Uspdev\Votacao\View\SessaoPhp as SS;
 
+#[\AllowDynamicProperties]
 class Run
 {
     // tela inicial para quem entra com o link encurtado

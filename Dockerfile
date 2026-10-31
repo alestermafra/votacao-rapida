@@ -1,17 +1,18 @@
 # Use uma imagem oficial do PHP com suporte a extensões e Apache
-FROM php:7.2-apache
+FROM php:8.3-apache
 
 # Instale dependências do sistema e extensões PHP necessárias
 RUN apt-get update && apt-get install -y \
     libpq-dev libzip-dev unzip \
-    libjpeg-dev libpng-dev \
-    libz-dev libmemcached-dev memcached libmemcached-tools \ 
+    libjpeg-dev libpng-dev libfreetype6-dev \
+    libz-dev libmemcached-dev memcached libmemcached-tools \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql zip gd \
     && pecl install memcached \
     && docker-php-ext-enable memcached
 
 # Instale Composer
-COPY --from=composer:1.10.27 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.11 /usr/bin/composer /usr/bin/composer
 
 # Configure o diretório de trabalho
 WORKDIR /var/www/html

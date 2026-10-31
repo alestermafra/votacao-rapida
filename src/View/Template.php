@@ -4,6 +4,7 @@ namespace Uspdev\Votacao\View {
 
     use Uspdev\Votacao\View\SessaoPhp as SS;
 
+    #[\AllowDynamicProperties]
     class Template extends \raelgc\view\Template
     {
         function __construct($addFile)

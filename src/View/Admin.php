@@ -6,6 +6,7 @@ use \RedBeanPHP\R as R;
 use Uspdev\Votacao\Model\Log;
 use Uspdev\Votacao\View\sessaoPhp as SS;
 
+#[\AllowDynamicProperties]
 class Admin
 {
     public static function home($aba)

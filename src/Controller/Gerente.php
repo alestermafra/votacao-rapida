@@ -10,6 +10,7 @@ use Uspdev\Votacao\Model\Votacao;
 use Uspdev\Votacao\Model\Usuario;
 use Uspdev\Votacao\Model\Log;
 
+#[\AllowDynamicProperties]
 class Gerente
 {
     public function __construct()

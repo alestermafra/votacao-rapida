@@ -5,6 +5,7 @@ namespace Uspdev\Votacao\View;
 use Uspdev\Votacao\View\sessaoPhp as SS;
 use League\CommonMark\CommonMarkConverter;
 
+#[\AllowDynamicProperties]
 class Aviso
 {
     const arq = ROOTDIR . '/doc/aviso/index.csv';

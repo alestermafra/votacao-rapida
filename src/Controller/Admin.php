@@ -6,6 +6,7 @@ use Uspdev\Votacao\Model\Sessao;
 use Uspdev\Votacao\Model\Usuario;
 use \RedBeanPHP\R as R;
 
+#[\AllowDynamicProperties]
 class Admin
 {
     const USER_MODEL = [

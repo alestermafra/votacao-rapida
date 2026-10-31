@@ -13,7 +13,7 @@ define('TPL', ROOTDIR . '/template');
 
 // carregando as variáveis de .env para o ambiente
 $dotenv = Dotenv\Dotenv::createImmutable(ROOTDIR . '/');
-$dotenv->load();
+$dotenv->safeLoad();
 
 # Se o servidor estiver atrás de um proxy,
 # o servidor da API deve ser colocada no /etc/hosts 
@@ -21,11 +21,13 @@ $dotenv->load();
 # ex.: 12.7.0.0.1 servidor-do-wwwroot.usp.br
 define('API', getenv('WWWROOT_API') . '/api'); // caminho da API
 
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+\Flight::set('flight.v2.output_buffering', true);
+
 $amb = getenv('AMBIENTE');
 if ($amb == 'dev') {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
-    error_reporting(E_ALL);
     # 1-faz o navegador solicitar as credenciais do usuário;
     # 0-nega acesso (default)
     putenv('USPDEV_WEBSERVICE_USER_FRIENDLY=0');
@@ -68,6 +70,7 @@ if (getenv('DB_TIPO') == 'sqlite') {
 
 R::selectDatabase('votacao');
 R::useFeatureSet('latest');
+R::setAllowFluidTransactions(true);
 if ($amb == 'dev') {
     R::freeze(false);
     // vamos monitorar mudanças no BD

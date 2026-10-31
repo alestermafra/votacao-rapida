@@ -6,6 +6,7 @@ use Uspdev\Votacao\View\SessaoPHP as SS;
 use Uspdev\Senhaunica\Senhaunica;
 
 
+#[\AllowDynamicProperties]
 class Gerente
 {
     public function login($cod = '')
@@ -22,20 +23,19 @@ class Gerente
                 return false;
             }
         }
-        $auth = new Senhaunica([
-            'consumer_key' => getenv('CONSUMER_KEY'),
-            'consumer_secret' => getenv('CONSUMER_SECRET'),
+
+        $res = Senhaunica::login([
+            'identifier' => getenv('CONSUMER_KEY'),
+            'secret' => getenv('CONSUMER_SECRET'),
             'callback_id' => getenv('SENHA_UNICA_CALLBACK_ID'), // callback_id é o sequencial no servidor
-            'amb' => getenv('SENHA_UNICA_AMB'), // 'dev' = teste, 'prod' = producao
         ]);
-        $res = $auth->login();
 
         $user['codpes'] = $res['loginUsuario'];
         $user['nome'] = $res['nomeUsuario'];
         $user['email'] = $res['emailPrincipalUsuario'];
 
         // todo: ainda tem de ajustar os vinculos permitidos
-        $vinculo = $auth->obterVinculo('tipoVinculo', ['SERVIDOR', 'ESTAGIARIORH']);
+        $vinculo = Senhaunica::obterVinculo('tipoVinculo', ['SERVIDOR', 'ESTAGIARIORH', 'DOCENTE']);
         if ($vinculo) {
             $user['unidade'] = $vinculo['siglaUnidade'];
             $usr = Api::send('/gerente/login', $user);

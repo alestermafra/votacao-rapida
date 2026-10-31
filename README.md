@@ -10,9 +10,9 @@ O objetivo desse sistema é fornecer uma plataforma de votação eletrônica a f
 
 ## Dependências
 
-* PHP 7.2
+* PHP 8.3
 * Apache
-* Composer 1.x
+* Composer 2.11
 * ext-curl
 
 ## Atenção

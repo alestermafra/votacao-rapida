@@ -27,7 +27,7 @@ class Email
                 }
             }
         }
-        exec('php ' . ROOTDIR . '/cli/processarEmailsFila.php > /dev/null &');
+        SELF::dispararProcessamentoFila();
         return [$count, $erro];
     }
 
@@ -69,7 +69,7 @@ class Email
             ],
         ]);
         if ($now) {
-            exec('php ' . ROOTDIR . '/cli/processarEmailsFila.php > /dev/null &');
+            SELF::dispararProcessamentoFila();
         }
         return $ret;
     }
@@ -98,7 +98,7 @@ class Email
                 ],
             ]);
         }
-        exec('php ' . ROOTDIR . '/cli/processarEmailsFila.php > /dev/null &');
+        SELF::dispararProcessamentoFila();
         return true;
     }
 
@@ -184,7 +184,7 @@ class Email
         ]);
 
         if ($now) {
-            exec('php ' . ROOTDIR . '/cli/processarEmailsFila.php > /dev/null &');
+            SELF::dispararProcessamentoFila();
         }
         return true;
     }
@@ -199,39 +199,47 @@ class Email
         return true;
     }
 
+    public static function dispararProcessamentoFila()
+    {
+        $phpBin = (defined('PHP_BINARY') && PHP_BINARY) ? PHP_BINARY : 'php';
+        $script = escapeshellarg(ROOTDIR . '/cli/processarEmailsFila.php');
+        exec("{$phpBin} {$script} > /dev/null 2>&1 &");
+    }
+
     public static function processarFila()
     {
-        return R::transaction(function () {
-            $emails = R::findForUpdate('email', 'enviado IS NULL');
-            $count = 0;
-            foreach ($emails as $email) {
-                $email_arr = $email->export();
-                unset($email_arr['id']);
-                unset($email_arr['sessao_id']);
+        $emails = R::find('email', 'enviado IS NULL');
+        $count = 0;
+        foreach ($emails as $email) {
+            $email_arr = $email->export();
+            unset($email_arr['id'], $email_arr['sessao_id'], $email_arr['enviado']);
 
-                $arr = array_map('unserialize', $email_arr);
-                $envio = SELF::send($arr);
-                if ($envio == true) {
-                    $email->enviado = date('Y-m-d H:i:s');
-                    $context = [
-                        'sessao_id' => $email->sessao_id,
-                        'assunto' => $arr['assunto'],
-                    ];
-                    Log::email('enviado - ' . $arr['destinatario'], $context);
-                    R::store($email);
-                } else {
-                    $context = [
-                        'sessao_id' => $email->sessao_id,
-                        'assunto' => $arr['assunto'],
-                        'erro' => $envio,
-                    ];
-                    Log::email('erro - ' . $arr['destinatario'], $context);
-                }
-
-                $count++;
+            $arr = [];
+            foreach ($email_arr as $key => $val) {
+                $arr[$key] = ($val !== null && $val !== '') ? unserialize($val) : null;
             }
-            return $count;
-        });
+
+            $envio = SELF::send($arr);
+            if ($envio === true) {
+                $email->enviado = date('Y-m-d H:i:s');
+                $context = [
+                    'sessao_id' => $email->sessao_id,
+                    'assunto' => $arr['assunto'] ?? '',
+                ];
+                Log::email('enviado - ' . ($arr['destinatario'] ?? ''), $context);
+                R::store($email);
+            } else {
+                $context = [
+                    'sessao_id' => $email->sessao_id,
+                    'assunto' => $arr['assunto'] ?? '',
+                    'erro' => $envio,
+                ];
+                Log::email('erro - ' . ($arr['destinatario'] ?? ''), $context);
+            }
+
+            $count++;
+        }
+        return $count;
     }
 
     public static function send($arr)
@@ -243,7 +251,7 @@ class Email
         $mailPassword = getenv('EMAIL_PWD');
 
         $mail = new PHPMailer();
-        //$mail->CharSet = 'UTF-8';
+        $mail->CharSet = PHPMailer::CHARSET_UTF8;
         //$mail->Encoding = 'base64';
         $mail->IsSMTP();
 
@@ -253,7 +261,7 @@ class Email
         //$mail->SMTPKeepAlive = true;
         $mail->Host = $mailHost;
         $mail->Port = $mailPort;
-        $mail->SMTPAuth = $mailUsername != null;
+        $mail->SMTPAuth = !empty($mailUsername);
 
         switch (getenv('EMAIL_AUTH_TYPE')) {
             case 'oauth':
@@ -287,15 +295,22 @@ class Email
                 $mail->Username = $mailUsername;
                 $mail->Password = $mailPassword;
                 break;
+            default:
+                $mail->SMTPAutoTLS = false;
+                break;
         }
 
         $mail->setLanguage('pt_br');
-        $mail->setFrom($mailFrom, utf8_decode("Votação rápida"));
+        $mail->setFrom($mailFrom, "Votação rápida");
         $mail->AddAddress($arr['destinatario']);
 
-        (isset($arr['bcc'])) ? $mail->addBCC($arr['bcc']) : '';
+        if (!empty($arr['bcc'])) {
+            $mail->addBCC($arr['bcc']);
+        }
 
-        !empty($arr['responder_para']) ? $mail->addReplyTo($arr['responder_para']) : '';
+        if (!empty($arr['responder_para'])) {
+            $mail->addReplyTo($arr['responder_para']);
+        }
 
         if (!empty($arr['embedded'])) {
             foreach ($arr['embedded'] as $embedded) {
@@ -305,7 +320,7 @@ class Email
 
         //$mail->WordWrap = 50; // Definir quebra de linha
         $mail->IsHTML = true; // Enviar como HTML
-        $mail->Subject = utf8_decode($arr['assunto']);
+        $mail->Subject = $arr['assunto'];
         //$mail->Body = $arr['corpo']; 
         $mail->msgHTML($arr['corpo']);
         //$mail->AltBody = $arr['alt']; //PlainText, para caso quem receber o email não aceite o corpo HTML
